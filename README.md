@@ -1,6 +1,6 @@
 # TarotNAI
 
-A self-hosted web front-end for NovelAI image generation. You run it on your own
+A self-hosted web front-end for NovelAI image generation that restores the old classic NovelAI image generation UI. You run it on your own
 machine, it talks to NovelAI with your own API key, and the images stay on your
 disk.
 
