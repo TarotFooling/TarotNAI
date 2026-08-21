@@ -144,7 +144,7 @@ function errorForStatus(status, body) {
         code: 'payment_required',
       });
     case 429:
-      return new NaiError('NovelAI is rate limiting us. Try again shortly.', {
+      return new NaiError('NovelAI is rate limiting you. Try again shortly.', {
         status,
         code: 'rate_limited',
         retryable: true,
