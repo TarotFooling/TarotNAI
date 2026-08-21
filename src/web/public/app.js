@@ -3082,7 +3082,10 @@ function syncCost() {
   syncGenerateDisabled();
 
   
-  const label = overPixelCap ? 'Invalid' : String(anlas);
+  const enhancing = enhancePanelOpen();
+  const label = enhancing
+    ? String(enhancePanelAnlas())
+    : (overPixelCap ? 'Invalid' : String(anlas));
   const changed = costShown !== null && costShown !== label;
   costBadge.textContent = label;
   costShown = label;
@@ -4648,8 +4651,6 @@ const enhanceStrength = document.getElementById('enhance-strength');
 const enhanceStrengthRange = document.getElementById('enhance-strength-range');
 const enhanceNoise = document.getElementById('enhance-noise');
 const enhanceNoiseRange = document.getElementById('enhance-noise-range');
-const enhanceRun = document.getElementById('enhance-run');
-const enhanceCostValue = document.getElementById('enhance-cost');
 
 const variationsButton = document.getElementById('generate-variations');
 const upscaleButton = document.getElementById('upscale');
@@ -4737,7 +4738,7 @@ function setBusy(busy) {
   syncGenerateDisabled();
   generateButton.classList.remove('generate-button--pressed');
   if (canvasProgress) canvasProgress.hidden = !busy;
-  generateLabel.textContent = busy ? 'Generating' : generateIdleLabel;
+  generateLabel.textContent = busy ? 'Generating' : idleGenerateLabel();
 }
 
 function focusedOutputSize(width, height) {
@@ -5395,15 +5396,28 @@ function syncEnhanceAmount() {
   }
 }
 
-function syncEnhanceCost() {
+function enhancePanelOpen() {
+  const panel = document.getElementById('enhance-panel');
+  return Boolean(panel) && !panel.hidden;
+}
+
+function enhancePanelAnlas() {
   const target = enhanceTarget();
-  const magnitude = Number(enhanceMagnitude.value) || ENHANCE_DEFAULT_MAGNITUDE;
-  const anlas = target ? enhanceAnlas({ ...target, magnitude }) : 0;
-  enhanceCostValue.textContent = String(anlas);
-  enhanceRun.disabled = !target;
-  enhanceRun.title = target
-    ? `Enhance to ${target.width}x${target.height} (${anlas} Anlas)`
-    : 'No image to enhance';
+  if (!target) return 0;
+  const field = document.getElementById('enhance-magnitude');
+  const magnitude = Number(field?.value) || ENHANCE_DEFAULT_MAGNITUDE;
+  return enhanceAnlas({ ...target, magnitude });
+}
+
+function idleGenerateLabel() {
+  if (!enhancePanelOpen()) return generateIdleLabel ?? '';
+  const target = enhanceTarget();
+  return target ? `Enhance to ${target.width}x${target.height}` : 'Enhance';
+}
+
+function syncEnhanceCost() {
+  generateLabel.textContent = idleGenerateLabel();
+  syncCost();
 }
 
 function openEnhancePanel() {
@@ -5414,7 +5428,10 @@ function openEnhancePanel() {
 }
 
 function closeEnhancePanel() {
+  if (enhancePanel.hidden) return;
   enhancePanel.hidden = true;
+  generateLabel.textContent = idleGenerateLabel();
+  syncCost();
 }
 
 enhanceButton.addEventListener('click', () => {
@@ -5452,7 +5469,7 @@ linkEnhanceSlider(enhanceMagnitude, enhanceMagnitudeRange, syncEnhanceCost);
 linkEnhanceSlider(enhanceStrength, enhanceStrengthRange);
 linkEnhanceSlider(enhanceNoise, enhanceNoiseRange);
 
-enhanceRun.addEventListener('click', async () => {
+async function runEnhance() {
   if (!currentImage) return;
   const target = enhanceTarget();
   if (!target) return;
@@ -5473,7 +5490,7 @@ enhanceRun.addEventListener('click', async () => {
     failure: 'The enhance pass failed.',
     anlas: enhanceAnlas({ ...target, magnitude }),
   });
-});
+}
 
 variationsButton.addEventListener('click', async () => {
   if (!currentImage) return;
@@ -5592,6 +5609,13 @@ function identicalToLastGeneration(params) {
 generateButton.addEventListener('click', async () => {
   generateButton.classList.add('generate-button--pressed');
   await new Promise((r) => setTimeout(r, 150));
+
+  if (enhancePanelOpen()) {
+    generateButton.classList.remove('generate-button--pressed');
+    await runEnhance();
+    return;
+  }
+
   setBusy(true);
 
   const params = readParams();

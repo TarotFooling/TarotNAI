@@ -232,13 +232,14 @@ textarea:focus-visible {
 
 .enhance-panel {
   position: absolute;
-  top: 63px;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 64px;
+  left: 30px;
+  width: min(560px, calc(100% - 60px));
+  max-height: calc(100% - 130px);
+  overflow-y: auto;
   z-index: 2;
   display: flex;
   flex-direction: column;
-  width: min(560px, calc(100% - 40px));
   background-color: var(--nai-bg-panel);
   border: var(--nai-border);
   border-radius: var(--nai-radius);
@@ -357,6 +358,14 @@ textarea:focus-visible {
   padding: 0;
 }
 
+.enhance-panel__tune .slider-field__number {
+  flex: 0 0 auto;
+}
+
+.enhance-panel__tune .slider-field__range {
+  margin-bottom: 0;
+}
+
 .enhance-panel__advanced {
   display: flex;
   flex-direction: row;
@@ -387,43 +396,6 @@ textarea:focus-visible {
 
 .enhance-panel__toggle:hover {
   opacity: 1;
-}
-
-.enhance-panel__run {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--nai-space-2);
-  height: 42px;
-  margin: 0 var(--nai-space-3) var(--nai-space-3);
-  background-color: var(--nai-bg-raised);
-  border: 0;
-  border-radius: var(--nai-radius);
-  color: var(--nai-text);
-  font-family: inherit;
-  font-size: var(--nai-text-base);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.enhance-panel__run:hover:not(:disabled) {
-  color: var(--nai-accent);
-}
-
-.enhance-panel__run:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.enhance-panel__cost {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  background-color: var(--nai-bg-page);
-  border-radius: var(--nai-radius);
-  font-size: var(--nai-text-sm);
-  font-weight: 700;
 }
 
 .quick-action__divider {
