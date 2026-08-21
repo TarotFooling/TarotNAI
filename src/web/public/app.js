@@ -1999,6 +1999,10 @@ function buildPositionGrid(grid) {
 const estimateTokens = (text) =>
   text.trim() ? text.trim().split(/[\s,]+/).filter(Boolean).length : 0;
 
+const BASE_TOKEN_CAPACITY = 60;
+const tokenCapacity = () =>
+  isV5Model(selectedModel) ? BASE_TOKEN_CAPACITY * 2 : BASE_TOKEN_CAPACITY;
+
 const closeGenderFlyout = () => {
   genderFlyout.hidden = true;
   addCharacterButton.setAttribute('aria-expanded', 'false');
@@ -2082,7 +2086,10 @@ function renderCharacters() {
       for (const tab of card.querySelectorAll('.character-tab')) {
         tab.setAttribute('aria-selected', String(tab.dataset.tab === character.tab));
       }
-      const used = Math.min(estimateTokens(onUc ? character.uc : character.prompt) / 60, 1);
+      const used = Math.min(
+        estimateTokens(onUc ? character.uc : character.prompt) / tokenCapacity(),
+        1,
+      );
       q('token-fill').style.width = `${(used * 100).toFixed(1)}%`;
 
       const suggest = attachSuggest(input, q('suggest'));
@@ -2257,7 +2264,7 @@ characterList.addEventListener('input', (event) => {
   const character = characters[index];
   character[character.tab === 'uc' ? 'uc' : 'prompt'] = input.value;
 
-  const used = Math.min(estimateTokens(input.value) / 60, 1);
+  const used = Math.min(estimateTokens(input.value) / tokenCapacity(), 1);
   input
     .closest('.character-card')
     .querySelector('[data-role="token-fill"]')
@@ -3543,6 +3550,7 @@ syncModelFeatures = () => {
   preciseBox.hidden = !supported;
   vibeIntentOption.hidden = !supported;
   preciseIntentOption.hidden = !supported;
+  renderCharacters();
   syncCost();
 };
 

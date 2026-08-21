@@ -104,9 +104,28 @@ export function positionToCenter(position) {
   };
 }
 
+export const PROMPT_LIMIT = 8000;
+export const CHARACTER_PROMPT_LIMIT = 2000;
+export const V5_PROMPT_LIMIT = PROMPT_LIMIT * 2;
+export const V5_CHARACTER_PROMPT_LIMIT = CHARACTER_PROMPT_LIMIT * 2;
+
+const V5_MODELS = new Set([V5_CURATED_MODEL, V5_FULL_MODEL]);
+
+export function promptLimit(model) {
+  return V5_MODELS.has(model) ? V5_PROMPT_LIMIT : PROMPT_LIMIT;
+}
+
+export function characterPromptLimit(model) {
+  return V5_MODELS.has(model) ? V5_CHARACTER_PROMPT_LIMIT : CHARACTER_PROMPT_LIMIT;
+}
+
 export const CharacterPromptSchema = z.object({
-  prompt: z.string().trim().min(1, 'A character needs a prompt').max(2000),
-  uc: z.string().trim().max(2000).default(''),
+  prompt: z
+    .string()
+    .trim()
+    .min(1, 'A character needs a prompt')
+    .max(V5_CHARACTER_PROMPT_LIMIT),
+  uc: z.string().trim().max(V5_CHARACTER_PROMPT_LIMIT).default(''),
   position: z
     .union([z.literal(''), z.enum(CHARACTER_POSITIONS)])
     .default(''),
@@ -281,8 +300,8 @@ const ResolutionSchema = z
   });
 
 export const GenerationParamsSchema = z.object({
-  prompt: z.string().trim().min(1, 'Prompt cannot be empty').max(8000),
-  negativePrompt: z.string().trim().max(8000).default(''),
+  prompt: z.string().trim().min(1, 'Prompt cannot be empty').max(V5_PROMPT_LIMIT),
+  negativePrompt: z.string().trim().max(V5_PROMPT_LIMIT).default(''),
   resolution: ResolutionSchema.default(DEFAULT_RESOLUTION),
   model: z.enum(modelKeys).default(DEFAULT_MODEL),
   sampler: z.enum(Object.keys(SAMPLERS)).default(DEFAULT_SAMPLER),
@@ -328,6 +347,40 @@ export const GenerationParamsSchema = z.object({
 }).refine((p) => !p.precise || !(p.image && p.mask), {
   message: 'Precise Reference is not supported for inpainting',
   path: ['precise'],
+}).superRefine((p, ctx) => {
+  const limit = promptLimit(p.model);
+  const charLimit = characterPromptLimit(p.model);
+
+  if (p.prompt.length > limit) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Prompt is limited to ${limit} characters for ${MODELS[p.model]}`,
+      path: ['prompt'],
+    });
+  }
+  if (p.negativePrompt.length > limit) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Undesired content is limited to ${limit} characters for ${MODELS[p.model]}`,
+      path: ['negativePrompt'],
+    });
+  }
+  p.characters.forEach((c, i) => {
+    if (c.prompt.length > charLimit) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Character prompts are limited to ${charLimit} characters for ${MODELS[p.model]}`,
+        path: ['characters', i, 'prompt'],
+      });
+    }
+    if (c.uc.length > charLimit) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Character undesired content is limited to ${charLimit} characters for ${MODELS[p.model]}`,
+        path: ['characters', i, 'uc'],
+      });
+    }
+  });
 });
 
 export function isInpainting(params) {
