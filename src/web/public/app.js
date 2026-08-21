@@ -2661,11 +2661,18 @@ function renderAccountBalance() {
   }
 
   if (anlasGroup) anlasGroup.hidden = false;
-  anlasValue.textContent = String(accountBalance.anlas ?? 0);
 
-  const parts = [`${accountBalance.anlas ?? 0} Anlas on the NovelAI account`];
-  if (accountBalance.subscriptionAnlas > 0) {
-    parts.push(`${accountBalance.subscriptionAnlas} monthly allowance`);
+  // NovelAI splits the balance in two: Anlas bought outright, and the monthly
+  // allowance that comes with a subscription. Both are spendable, and a paid
+  // account can easily have all of its Anlas in either one, so the headline
+  // number is the total rather than just the purchased half.
+  const purchased = accountBalance.anlas ?? 0;
+  const allowance = accountBalance.subscriptionAnlas ?? 0;
+  anlasValue.textContent = String(purchased + allowance);
+
+  const parts = [`${purchased + allowance} Anlas on the NovelAI account`];
+  if (allowance > 0) {
+    parts.push(`${purchased} purchased · ${allowance} monthly allowance`);
   }
   parts.push(`A precise reference costs ${ANLAS_PER_PRECISE_REFERENCE} per generation`);
   if (anlasGroup) anlasGroup.title = parts.join(' · ');
