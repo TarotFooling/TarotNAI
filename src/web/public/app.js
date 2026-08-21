@@ -2836,6 +2836,11 @@ opusBarInfo?.addEventListener('click', () => {
   setSettingsOpen(true);
 });
 
+opusBar?.addEventListener('click', (event) => {
+  if (event.target === opusBarInfo) return;
+  if (window.matchMedia('(max-width: 900px)').matches) setSettingsOpen(true);
+});
+
 let vibes = [];
 var vibesReady = true;
 

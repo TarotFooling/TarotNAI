@@ -128,6 +128,50 @@
     margin: 0;
   }
 
+  #opus-bar {
+    position: absolute;
+    left: var(--nai-space-2);
+    right: var(--nai-space-2);
+    bottom: calc(100% - var(--nai-space-1));
+    flex-direction: row;
+    align-items: center;
+    gap: var(--nai-space-1);
+    margin: 0;
+    padding: 3px var(--nai-space-2);
+    box-sizing: border-box;
+    background-color: var(--nai-bg-panel);
+    border: var(--nai-border);
+    border-radius: var(--nai-radius);
+    z-index: 4;
+    cursor: pointer;
+  }
+
+  #opus-bar .opus-meter__row {
+    flex: 0 1 auto;
+    min-width: 0;
+    gap: 0;
+  }
+
+  #opus-bar .opus-meter__label {
+    overflow: hidden;
+    font-size: 0.68rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  #opus-bar .opus-meter__info {
+    display: none;
+  }
+
+  #opus-bar .opus-meter__track {
+    flex: 1 0 90px;
+    height: 3px;
+  }
+
+  .panel-footer:has(#opus-bar:not([hidden])) .generate-notice {
+    bottom: calc(100% + 22px);
+  }
+
   .footer-icon-button {
     display: flex;
     align-items: center;
