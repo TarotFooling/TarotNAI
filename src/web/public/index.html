@@ -1689,6 +1689,30 @@
   </div>
 </div>
 
+<div class="key-gate" id="key-gate" hidden>
+  <div class="key-gate__card" role="dialog" aria-modal="true" aria-labelledby="key-gate-title">
+    <span class="rand-mark icon-crow" aria-hidden="true"></span>
+    <h1 class="key-gate__title" id="key-gate-title">Add your NovelAI key</h1>
+    <p class="key-gate__body">
+      TarotNAI generates with your own NovelAI account, so it needs your
+      persistent API token before it can do anything.
+    </p>
+    <form class="key-gate__form" id="key-gate-form" novalidate>
+      <label class="key-gate__label" for="key-gate-input">Persistent API token</label>
+      <input class="key-gate__input" id="key-gate-input" name="key" type="password"
+             autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+             placeholder="pst-..." aria-describedby="key-gate-note" required>
+      <p class="key-gate__note" id="key-gate-note" role="status" aria-live="polite" hidden></p>
+      <button class="key-gate__button" id="key-gate-submit" type="submit">Save key</button>
+    </form>
+    <p class="key-gate__help">
+      Find it in NovelAI under User Settings, Account, Get Persistent API Token.
+      It is saved to your <code class="key-gate__code">.env</code> so you only do
+      this once.
+    </p>
+  </div>
+</div>
+
 <div class="drop-overlay" id="drop-overlay" aria-hidden="true" hidden>
   <div class="drop-overlay__badge">
     <span class="icon icon-drop-upload" aria-hidden="true"></span>

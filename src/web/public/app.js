@@ -5502,6 +5502,84 @@ function hideLoginGate() {
   if (loginGate) loginGate.hidden = true;
 }
 
+const keyGate = document.getElementById('key-gate');
+const keyGateForm = document.getElementById('key-gate-form');
+const keyGateInput = document.getElementById('key-gate-input');
+const keyGateNote = document.getElementById('key-gate-note');
+const keyGateSubmit = document.getElementById('key-gate-submit');
+
+function setKeyGateNote(text, invalid = false) {
+  if (!keyGateNote) return;
+  keyGateNote.textContent = text ?? '';
+  keyGateNote.hidden = !text;
+  keyGate?.classList.toggle('key-gate--invalid', invalid);
+}
+
+// There is deliberately no way to dismiss this. Without a key the app cannot
+// generate, so letting it be closed would just put the user back in front of a
+// UI where every button fails.
+function showKeyGate(canSave) {
+  if (!keyGate) return;
+  keyGate.hidden = false;
+
+  if (!canSave) {
+    if (keyGateForm) keyGateForm.hidden = true;
+    setKeyGateNote(
+      'This server is reachable from the network with no sign-in, so it will not accept ' +
+        'a key over HTTP. Set NAI_KEY in .env and restart.',
+      true,
+    );
+    return;
+  }
+
+  keyGateInput?.focus();
+}
+
+keyGateForm?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  const key = keyGateInput?.value.trim() ?? '';
+  if (!key) {
+    setKeyGateNote('Paste your key first.', true);
+    keyGateInput?.focus();
+    return;
+  }
+
+  keyGateSubmit.disabled = true;
+  setKeyGateNote('Checking that key with NovelAI...');
+
+  let res;
+  let body = {};
+  try {
+    res = await fetch('/api/key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key }),
+    });
+    body = await res.json().catch(() => ({}));
+  } catch {
+    keyGateSubmit.disabled = false;
+    setKeyGateNote('Could not reach the server. Try again.', true);
+    return;
+  }
+
+  if (!res.ok) {
+    keyGateSubmit.disabled = false;
+    setKeyGateNote(body.message ?? 'That key was not accepted.', true);
+    keyGateInput?.select();
+    return;
+  }
+
+  if (keyGateInput) keyGateInput.value = '';
+  keyGate.hidden = true;
+  keyGate.classList.remove('key-gate--invalid');
+  keyGateSubmit.disabled = false;
+  setKeyGateNote('');
+
+  applyStepsCeiling();
+  applyAccountBalance(body.balance ?? null);
+});
+
 async function checkSession() {
   let body;
   try {
@@ -5534,6 +5612,10 @@ async function checkSession() {
   applyStepsCeiling();
   applyAccountBalance(body.balance);
   showMenuProfile(body.user);
+
+  // Last, so the app behind the gate is fully set up and is ready to use the
+  // moment a key is accepted.
+  if (!body.hasKey) showKeyGate(body.canSaveKey);
 }
 
 checkSession();

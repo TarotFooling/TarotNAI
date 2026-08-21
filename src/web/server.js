@@ -7,6 +7,7 @@ import { parseGenerationParams, describeParamsError, MODELS } from '../shared/pa
 import { isTerminal } from '../shared/job.js';
 import { VIBE_MIN, VIBE_MAX, parseVibeBundle } from '../shared/vibe.js';
 import { toWebp } from '../shared/image.js';
+import { createBalanceReader } from '../nai/client.js';
 import { deniedPage } from './denied.js';
 import { loginPage } from './loginPage.js';
 
@@ -108,6 +109,8 @@ export function createServer({
   encodeVibe = null,
   suggestTags = null,
   readBalance = null,
+  hasKey = () => Boolean(config.naiKey),
+  onKeySaved = null,
 }) {
   const watchers = new Map();
 
@@ -203,8 +206,15 @@ export function createServer({
   };
 
 
+  // Accepting a key over HTTP is only safe when the person posting it had to
+  // prove they are the owner. With no sign-in that proof is "can reach the
+  // port", which is fine on loopback and not fine on a LAN, so the setup gate
+  // closes there and .env stays the only way in.
+  const loopback = config.host === '127.0.0.1' || config.host === 'localhost' || config.host === '::1';
+  const keySavingAllowed = () => Boolean(onKeySaved) && (auth.mode !== 'open' || loopback);
+
   const accountBalance = async ({ force = false } = {}) => {
-    if (!readBalance) return null;
+    if (!hasKey()) return null;
     try {
       const { anlas, subscriptionAnlas, tier, opus } = await readBalance({ force });
       return { anlas, subscriptionAnlas, tier, opus: opus ?? null };
@@ -371,6 +381,68 @@ export function createServer({
           balance: me ? await accountBalance({ force: fresh }) : null,
           authMode: auth.mode,
           authConfigured: auth.configured,
+          hasKey: hasKey(),
+          canSaveKey: keySavingAllowed(),
+        });
+        return;
+      }
+
+      if (pathname === '/api/key' && req.method === 'POST') {
+        const user = requireUser(req, res);
+        if (!user) return;
+
+        if (!keySavingAllowed()) {
+          json(res, 403, {
+            error: 'key_setup_closed',
+            message:
+              'This server is reachable from the network with no sign-in, so it will not ' +
+              'accept a key over HTTP. Set NAI_KEY in .env instead.',
+          });
+          return;
+        }
+
+        let key = '';
+        try {
+          key = String(JSON.parse(await readBody(req, 8 * 1024)).key ?? '').trim();
+        } catch {
+          json(res, 400, { error: 'bad_json', message: 'Body must be JSON.' });
+          return;
+        }
+
+        if (!key) {
+          json(res, 400, { error: 'empty_key', message: 'Paste your key first.' });
+          return;
+        }
+
+        // Check the key against NovelAI before it touches disk, so a typo is
+        // caught here rather than on the first generate.
+        let balance;
+        try {
+          balance = await createBalanceReader(key, { log: false })({ force: true });
+        } catch (err) {
+          const bad = err?.code === 'unauthorized';
+          json(res, bad ? 400 : 502, {
+            error: bad ? 'invalid_key' : 'nai_unreachable',
+            message: bad
+              ? 'NovelAI did not accept that key. Check you copied the whole token.'
+              : 'Could not reach NovelAI to check that key. Try again in a moment.',
+          });
+          return;
+        }
+
+        try {
+          await onKeySaved?.(key);
+        } catch (err) {
+          json(res, 500, {
+            error: 'save_failed',
+            message: `Key works, but saving it failed: ${err.message}`,
+          });
+          return;
+        }
+
+        json(res, 200, {
+          ok: true,
+          balance: { ...balance, opus: balance.opus ?? null },
         });
         return;
       }
@@ -425,7 +497,7 @@ export function createServer({
         const user = requireUser(req, res);
         if (!user) return;
 
-        if (!suggestTags) {
+        if (!hasKey()) {
           json(res, 503, {
             error: 'no_keys',
             message: 'Tag suggestions need a NovelAI key. See .env.example.',
@@ -469,7 +541,7 @@ export function createServer({
         const user = requireUser(req, res);
         if (!user) return;
 
-        if (!encodeVibe) {
+        if (!hasKey()) {
           json(res, 503, {
             error: 'no_keys',
             message: 'Vibe encoding needs a NovelAI key. See .env.example.',
