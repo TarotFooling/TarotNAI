@@ -6,6 +6,8 @@ disk.
 
 It's like totally cool yo.
 
+![The TarotNAI interface](docs/screenshot.png)
+
 - Prompt editing with emphasis, character prompts and positioning
 - img2img and inpainting with a canvas editor
 - Vibe transfer and precise reference
