@@ -966,8 +966,7 @@ export function createBalanceReader(
     if (force) return fetchFresh();
     if (!cached) return fetchFresh();
 
-    // Stale-while-revalidate: hand back what we have straight away and refresh
-    // in the background, so a page load never waits on NovelAI.
+    // we don't want to wait on NAI because they are stinky and laggy
     if (Date.now() - cached.at >= ttlMs) fetchFresh().catch(() => {});
     return cached.value;
   };
