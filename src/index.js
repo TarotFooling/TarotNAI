@@ -19,9 +19,7 @@ if (!status.ok) {
   console.warn('  See .env.example.');
 }
 
-// The key can arrive after boot from the setup gate, so everything built on top
-// of it lives in one slot that gets rebuilt when the key changes rather than
-// being captured once at startup.
+
 let nai = buildNaiClients(config.naiKey);
 
 function buildNaiClients(key) {
@@ -62,8 +60,7 @@ if (await auth.restore()) console.log('  signed-in session restored from disk');
 
 const store = new ImageStore(config.imagesDir);
 
-// Null when there is no key, so the routes keep their existing "not configured"
-// branches, and live again the moment a key is saved.
+
 const readBalance = (...args) => nai.readBalance?.(...args) ?? null;
 
 const server = createServer({
@@ -91,8 +88,7 @@ server.listen(config.port, config.host, () => {
   else if (config.authMode === 'password') console.log('  auth: password');
   else console.log('  auth: Discord OAuth');
 
-  // Warm the balance cache now so the first page load does not have to wait on
-  // a cold NovelAI round-trip before it can show Anlas and generation cost.
+
   readBalance()
     ?.then((balance) => {
       const opus = balance.opus ? `, Opus ${balance.opus.percent}%` : '';
