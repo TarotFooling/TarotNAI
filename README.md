@@ -20,12 +20,6 @@ However the following is missing:
 - Tokenizer
 - 3D model support (never getting added to this UI)
 
-
-- Prompt editing with emphasis, character prompts and positioning
-- img2img and inpainting with a canvas editor
-- Vibe transfer and precise reference
-- Metadata import, and a history rail that survives a reload
-
 ## Requirements
 
 - [Node.js](https://nodejs.org) 22 or newer
