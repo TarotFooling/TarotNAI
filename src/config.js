@@ -9,9 +9,7 @@ const password = process.env.APP_PASSWORD ?? '';
 
 const authMode = oauthEnabled ? 'oauth' : password ? 'password' : 'open';
 
-// The key is the one setting that can arrive after boot, from the setup gate in
-// the UI. Everything else is read once and fixed; this one is a getter over a
-// mutable slot so a key saved at runtime is visible everywhere config is read.
+
 let naiKey = (process.env.NAI_KEY ?? '').trim();
 
 export function setNaiKey(value) {
