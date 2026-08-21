@@ -7,6 +7,7 @@ export const FailureCode = Object.freeze({
   SHUTDOWN: 'shutdown',
 });
 
+// The lone survivor lol
 export class Runner extends EventEmitter {
   #jobs = new Map();
   #running = null;
