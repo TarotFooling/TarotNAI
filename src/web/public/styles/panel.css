@@ -728,6 +728,10 @@
   width: 16px;
   height: 18px;
 }
+.icon-sparkles { --icon: url('../icons/sparkles.svg'); }
+.icon-variations { --icon: url('../icons/variations.svg'); }
+.icon-upscale { --icon: url('../icons/upscale.svg'); }
+.icon-small-arrow { --icon: url('../icons/small_arrow_right.svg'); }
 
 .icon-dropper { --icon: url('../icons/dropper.svg'); }
 .icon-penwriting { --icon: url('../icons/penwriting.svg'); }

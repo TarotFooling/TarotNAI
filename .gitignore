@@ -11,3 +11,5 @@ images/
 .sessions.json.tmp
 
 .claude/
+
+result-cluster/

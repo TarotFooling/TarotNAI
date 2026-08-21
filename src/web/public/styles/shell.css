@@ -197,6 +197,47 @@ textarea:focus-visible {
   cursor: pointer;
 }
 
+.result-tool--cost {
+  width: 96px;
+  gap: 6px;
+}
+
+.result-tool__cost {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  align-self: stretch;
+  margin: -3px 0;
+  background-color: var(--nai-bg-raised);
+  border-radius: var(--nai-radius);
+}
+
+.result-tool__cost .icon--anla {
+  width: 11px;
+  height: 10px;
+}
+
+.result-tool__cost-value {
+  color: var(--nai-text);
+  font-size: var(--nai-text-sm);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.result-tool--cost:disabled .result-tool__cost {
+  background-color: transparent;
+}
+
+.quick-action__divider {
+  align-self: center;
+  width: 1px;
+  height: 24px;
+  margin: 0 6px;
+  background-color: var(--nai-bg-raised);
+}
+
 .result-tool--active {
   color: var(--nai-accent);
 }

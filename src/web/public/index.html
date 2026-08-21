@@ -1068,6 +1068,27 @@
     </div>
 
     <div class="quick-action" id="quick-action" hidden>
+      <button class="result-tool" type="button" id="enhance"
+              aria-label="Enhance">
+        <span class="icon icon--sm icon-sparkles" aria-hidden="true"></span>
+      </button>
+      <button class="result-tool result-tool--cost" type="button" id="generate-variations"
+              aria-label="Generate variations">
+        <span class="icon icon--sm icon-variations" aria-hidden="true"></span>
+        <span class="result-tool__cost">
+          <span class="result-tool__cost-value" id="variations-cost">0</span>
+          <span class="icon icon--anla icon-anla" aria-hidden="true"></span>
+        </span>
+      </button>
+      <button class="result-tool result-tool--cost" type="button" id="upscale"
+              aria-label="Upscale image">
+        <span class="icon icon--sm icon-upscale" aria-hidden="true"></span>
+        <span class="result-tool__cost">
+          <span class="result-tool__cost-value" id="upscale-cost">0</span>
+          <span class="icon icon--anla icon-anla" aria-hidden="true"></span>
+        </span>
+      </button>
+      <span class="quick-action__divider" aria-hidden="true"></span>
       <button class="result-tool" type="button" id="use-as-base"
               aria-label="Use as base image">
         <span class="icon icon-wand-sparkles" aria-hidden="true"></span>
@@ -1079,6 +1100,11 @@
       <button class="result-tool" type="button" id="inpaint-image"
               aria-label="Inpaint image">
         <span class="icon icon--sm icon-inpaint" aria-hidden="true"></span>
+      </button>
+      <button class="result-tool" type="button" id="director-tools"
+              aria-label="Send to Director Tools" disabled
+              title="Director Tools are not available yet.">
+        <span class="icon icon--sm icon-small-arrow" aria-hidden="true"></span>
       </button>
     </div>
 

@@ -1,3 +1,7 @@
+let imagesDirty = false;
+let restoring = false;
+let saveReady = false;
+
 const promptBlock = document.querySelector('.prompt-block');
 const tabs = [...document.querySelectorAll('.prompt-tab[role="tab"]')];
 for (const tab of tabs) {
@@ -2657,6 +2661,7 @@ function syncGenerateDisabled() {
 
 const COST_SETTLE_MS = 350;
 let costShown = null;
+let pendingGenerationAnlas = 0;
 let costSettling = false;
 let costSettleTimer = 0;
 
@@ -2686,6 +2691,11 @@ const anlasValue = document.getElementById('anlas-value');
 
 let accountBalance = null;
 
+const BALANCE_POLL_MS = 60_000;
+
+let localAnlasSpend = 0;
+let balancePollTimer = null;
+
 const TIER_NAMES = { 0: 'Paper', 1: 'Tablet', 2: 'Scroll', 3: 'Opus' };
 
 function renderAccountTier() {
@@ -2707,11 +2717,15 @@ function renderAccountBalance() {
 
   const purchased = accountBalance.anlas ?? 0;
   const allowance = accountBalance.subscriptionAnlas ?? 0;
-  anlasValue.textContent = String(purchased + allowance);
+  const shown = displayedAnlas();
+  anlasValue.textContent = String(shown);
 
-  const parts = [`${purchased + allowance} Anlas on the NovelAI account`];
+  const parts = [`${shown} Anlas on the NovelAI account`];
   if (allowance > 0) {
     parts.push(`${purchased} purchased · ${allowance} monthly allowance`);
+  }
+  if (localAnlasSpend > 0) {
+    parts.push(`${localAnlasSpend} spent since the last account check`);
   }
   parts.push(`A precise reference costs ${ANLAS_PER_PRECISE_REFERENCE} per generation`);
   if (anlasGroup) anlasGroup.title = parts.join(' · ');
@@ -2727,14 +2741,41 @@ async function refreshBalance() {
   }
 }
 
+function startBalancePolling() {
+  if (balancePollTimer) return;
+  balancePollTimer = setInterval(() => {
+    if (document.hidden) return;
+    refreshBalance();
+  }, BALANCE_POLL_MS);
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && accountBalance) refreshBalance();
+});
+
+function spendAnlasLocally(amount) {
+  const cost = Math.max(0, Math.round(Number(amount) || 0));
+  if (!cost || !accountBalance) return;
+  localAnlasSpend += cost;
+  renderAccountBalance();
+}
+
+function displayedAnlas() {
+  const purchased = accountBalance?.anlas ?? 0;
+  const allowance = accountBalance?.subscriptionAnlas ?? 0;
+  return Math.max(0, purchased + allowance - localAnlasSpend);
+}
+
 function applyAccountBalance(balance) {
   if (!balance || typeof balance !== 'object') return;
   accountBalance = balance;
+  localAnlasSpend = 0;
   renderAccountBalance();
   renderAccountTier();
   renderOpusUsage();
   syncCost();
   if (vibesReady) renderVibes();
+  startBalancePolling();
 }
 
 const opusBar = document.getElementById('opus-bar');
@@ -2851,6 +2892,22 @@ function removeVibe(id) {
 const FREE_MAX_PIXELS = 1024 * 1024;
 const FREE_MAX_STEPS = 28;
 
+let currentImageSize = null;
+
+const UPSCALE_SCALE = 4;
+
+const UPSCALE_PIXELS_PER_ANLAS = 786432;
+
+const UPSCALE_MAX_OUTPUT_PIXELS = 7424 * 6656;
+
+const VARIATION_IMAGE_COUNT = 3;
+const VARIATION_SURCHARGE = 1;
+const VARIATION_STRENGTH = 0.7;
+const ENHANCE_STRENGTH = 0.35;
+const ENHANCE_NOISE = 0;
+
+const V5_ANLAS_MULTIPLIER = 1.5;
+
 function isFreeGeneration({ width, height, steps, imageCount }) {
   return (
     Boolean(accountBalance?.opus)
@@ -2860,12 +2917,81 @@ function isFreeGeneration({ width, height, steps, imageCount }) {
   );
 }
 
-function generationAnlas({ width, height, steps, strength }) {
+function baseSamples({ width, height, steps }) {
   const r = Math.max(width * height, 65536);
-  const perSample = Math.ceil(
-    2951823174884865e-21 * r + 5.753298233447344e-7 * r * steps,
-  );
-  return Math.max(Math.ceil(perSample * strength), 2);
+  return Math.ceil(2951823174884865e-21 * r + 5.753298233447344e-7 * r * steps);
+}
+
+function generationSamples({ width, height, steps }) {
+  const perSample = baseSamples({ width, height, steps });
+  return isV5Model(selectedModel)
+    ? Math.ceil(perSample * V5_ANLAS_MULTIPLIER)
+    : perSample;
+}
+
+function generationAnlas({ width, height, steps, strength }) {
+  return Math.max(Math.ceil(generationSamples({ width, height, steps }) * strength), 2);
+}
+
+function upscaleAnlas({ width, height }) {
+  return Math.max(1, Math.round((width * height) / UPSCALE_PIXELS_PER_ANLAS));
+}
+
+function variationsAnlas({ width, height, steps }) {
+  const perImage = baseSamples({ width, height, steps }) + VARIATION_SURCHARGE;
+  const free = Boolean(accountBalance?.opus)
+    && width * height <= FREE_MAX_PIXELS
+    && steps <= FREE_MAX_STEPS;
+  return perImage * (VARIATION_IMAGE_COUNT - (free ? 1 : 0));
+}
+
+function resultActionSize() {
+  if (!currentImageSize) return null;
+  return fitToValid(currentImageSize.width, currentImageSize.height);
+}
+
+function syncResultCosts() {
+  const variationsCost = document.getElementById('variations-cost');
+  const upscaleCost = document.getElementById('upscale-cost');
+  const variationsButton = document.getElementById('generate-variations');
+  const upscaleButton = document.getElementById('upscale');
+  if (!variationsCost || !upscaleCost || !variationsButton || !upscaleButton) return;
+
+  const size = resultActionSize();
+  const steps = Number(document.getElementById('steps').value) || 0;
+
+  const variation = size
+    ? variationsAnlas({ width: size.width, height: size.height, steps })
+    : 0;
+
+  variationsCost.textContent = String(variation);
+  variationsButton.title = size
+    ? `Generate ${VARIATION_IMAGE_COUNT} variations at ${size.width}x${size.height}`
+      + ` (${variation} Anlas)`
+    : `Generate ${VARIATION_IMAGE_COUNT} variations of this image`;
+
+  const upscaled = currentImageSize
+    ? {
+      width: currentImageSize.width * UPSCALE_SCALE,
+      height: currentImageSize.height * UPSCALE_SCALE,
+    }
+    : null;
+  const anlas = currentImageSize ? upscaleAnlas(currentImageSize) : 0;
+  const tooBig = Boolean(upscaled) && upscaled.width * upscaled.height > UPSCALE_MAX_OUTPUT_PIXELS;
+  const unsupportedModel = !isV5Model(selectedModel);
+
+  upscaleCost.textContent = String(anlas);
+  upscaleButton.disabled = tooBig || unsupportedModel;
+  if (unsupportedModel) {
+    upscaleButton.title =
+      'Only the Anime v5 models support upscaling. Switch model to upscale this image.';
+  } else if (tooBig) {
+    upscaleButton.title =
+      `A ${UPSCALE_SCALE}x upscale of this image would be `
+      + `${upscaled.width}x${upscaled.height}, over what NovelAI allows.`;
+  } else {
+    upscaleButton.title = `Upscale ${UPSCALE_SCALE}x (${anlas} Anlas)`;
+  }
 }
 
 function renderPixelCapNotice(show, width, height) {
@@ -2917,6 +3043,7 @@ function syncCost() {
   const referenceCost = references * ANLAS_PER_PRECISE_REFERENCE;
 
   const anlas = generation + encodes + referenceCost;
+  pendingGenerationAnlas = generation + referenceCost;
 
   overPixelCap = overPixelBudget(width, height);
   renderPixelCapNotice(overPixelCap, width, height);
@@ -2955,6 +3082,8 @@ function syncCost() {
   costBadge.parentElement.title = parts.length
     ? `${anlas} Anlas on the next generation - ${parts.join(', ')}`
     : 'This generation costs no Anlas';
+
+  syncResultCosts();
 }
 
 function needsEncoding(vibe) {
@@ -4475,6 +4604,9 @@ const resultRow = document.getElementById('result-row');
 const useAsBaseButton = document.getElementById('use-as-base');
 const editImageButton = document.getElementById('edit-image');
 const inpaintImageButton = document.getElementById('inpaint-image');
+const enhanceButton = document.getElementById('enhance');
+const variationsButton = document.getElementById('generate-variations');
+const upscaleButton = document.getElementById('upscale');
 const copyClipboardButton = document.getElementById('copy-clipboard');
 const downloadImageButton = document.getElementById('download-image');
 const pinImageButton = document.getElementById('pin-image');
@@ -5064,10 +5196,12 @@ let currentArchivedId = null;
 
 function revealResultTools(src, seed, { id = null, archivedId = null } = {}) {
   currentImage = src;
+  currentImageSize = null;
   currentHistoryId = id;
   currentArchivedId = archivedId;
   quickAction.hidden = false;
   resultRow.hidden = false;
+  syncResultCosts();
 
   const probe = new Image();
   probe.onload = () => {
@@ -5075,6 +5209,9 @@ function revealResultTools(src, seed, { id = null, archivedId = null } = {}) {
     resolutionBadgeH.textContent = String(probe.naturalHeight);
     resolutionBadge.setAttribute(
       'aria-label', `${probe.naturalWidth} by ${probe.naturalHeight} pixels`);
+    if (currentImage !== src) return;
+    currentImageSize = { width: probe.naturalWidth, height: probe.naturalHeight };
+    syncResultCosts();
   };
   probe.src = src;
 
@@ -5100,6 +5237,161 @@ inpaintImageButton.addEventListener('click', async () => {
   if (!currentImage) return;
   acceptBaseImage(currentImage);
   await openMaskEditor();
+});
+
+
+function resultActionParams(strength) {
+  const params = readParams();
+  params.image = currentImage.slice(currentImage.indexOf(',') + 1);
+  params.strength = strength;
+  params.noise = ENHANCE_NOISE;
+  params.imageCount = 1;
+  delete params.mask;
+  delete params.inpaintStrength;
+  delete params.addOriginalImage;
+  return params;
+}
+
+async function runResultAction(url, params, { failure, anlas = 0 }) {
+  if (generateBusy) {
+    toastInfo('A generation is already running. Wait for it to finish.');
+    return;
+  }
+
+  setBusy(true);
+  const settings = captureSettings();
+
+  try {
+    const res = await apiFetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
+
+    let body = {};
+    try {
+      body = await res.text().then((t) => (t ? JSON.parse(t) : {}));
+    } catch {
+      setBusy(false);
+      reportError('The server sent a response this page could not read.');
+      return;
+    }
+
+    if (!res.ok) {
+      setBusy(false);
+      if (body.error === 'not_authenticated') {
+        onUnauthenticated();
+        return;
+      }
+      reportError(body.message ?? failure);
+      return;
+    }
+
+    lastParamsKey = null;
+    spendAnlasLocally(anlas);
+    watchJob(body.jobId, settings);
+  } catch (err) {
+    setBusy(false);
+    if (err.code === 'not_authenticated') return;
+    reportError(`Could not reach the server: ${err.message}`);
+  }
+}
+
+enhanceButton.addEventListener('click', async () => {
+  if (!currentImage) return;
+
+  const size = await measureImage(currentImage);
+  if (!size) {
+    reportError('That image could not be read.');
+    return;
+  }
+
+  const fitted = fitToValid(size.width, size.height);
+  const params = resultActionParams(ENHANCE_STRENGTH);
+  params.resolution = `${fitted.width},${fitted.height}`;
+  params.seed = 0;
+
+  const steps = Number(document.getElementById('steps').value) || 0;
+  const enhanceCost = isFreeGeneration({
+    width: fitted.width,
+    height: fitted.height,
+    steps,
+    imageCount: 1,
+  })
+    ? 0
+    : generationAnlas({
+      width: fitted.width,
+      height: fitted.height,
+      steps,
+      strength: ENHANCE_STRENGTH,
+    });
+
+  await runResultAction('/api/generate', params, {
+    failure: 'The enhance pass failed.',
+    anlas: enhanceCost,
+  });
+});
+
+variationsButton.addEventListener('click', async () => {
+  if (!currentImage) return;
+
+  const size = await measureImage(currentImage);
+  if (!size) {
+    reportError('That image could not be read.');
+    return;
+  }
+
+  const fitted = fitToValid(size.width, size.height);
+  const params = resultActionParams(VARIATION_STRENGTH);
+  params.resolution = `${fitted.width},${fitted.height}`;
+  params.seed = 0;
+  params.imageCount = VARIATION_IMAGE_COUNT;
+
+  await runResultAction('/api/generate', params, {
+    failure: 'The variations failed.',
+    anlas: variationsAnlas({
+      width: fitted.width,
+      height: fitted.height,
+      steps: Number(document.getElementById('steps').value) || 0,
+    }),
+  });
+});
+
+upscaleButton.addEventListener('click', async () => {
+  if (!currentImage) return;
+
+  const size = await measureImage(currentImage);
+  if (!size) {
+    reportError('That image could not be read.');
+    return;
+  }
+
+  const out = { width: size.width * UPSCALE_SCALE, height: size.height * UPSCALE_SCALE };
+  if (out.width * out.height > UPSCALE_MAX_OUTPUT_PIXELS) {
+    toastError(
+      `A ${UPSCALE_SCALE}x upscale of this image would be ${out.width}x${out.height}, `
+      + 'over what NovelAI allows.',
+    );
+    return;
+  }
+
+  if (!isV5Model(selectedModel)) {
+    toastError('Only the Anime v5 models support upscaling.');
+    return;
+  }
+
+  await runResultAction(
+    '/api/upscale',
+    {
+      image: currentImage.slice(currentImage.indexOf(',') + 1),
+      model: selectedModel,
+      scale: UPSCALE_SCALE,
+    },
+    {
+      failure: 'The upscale failed.',
+      anlas: upscaleAnlas(size),
+    },
+  );
 });
 
 
@@ -5144,7 +5436,7 @@ seedBadge.addEventListener('click', () => {
 
 function reportError(message) {
   console.error(message);
-  toastError(message, { autoClose: false });
+  toastError(message);
 }
 
 let lastParamsKey = null;
@@ -5237,6 +5529,7 @@ generateButton.addEventListener('click', async () => {
     }
 
     lastParamsKey = JSON.stringify(params);
+    spendAnlasLocally(pendingGenerationAnlas);
     watchJob(
       body.jobId,
       settings,
@@ -5255,10 +5548,6 @@ generateButton.addEventListener('click', async () => {
 
 
 import { loadState, loadImages, clearState, clearImages, createSaver } from './persist.js';
-
-let imagesDirty = false;
-
-let restoring = false;
 
 function collectDraft() {
   const text = {
@@ -5320,9 +5609,10 @@ function collectDraft() {
 }
 
 const saveDraft = createSaver(collectDraft);
+saveReady = true;
 
 function scheduleSave({ images = false } = {}) {
-  if (restoring) return;
+  if (restoring || !saveReady) return;
   if (images) imagesDirty = true;
   saveDraft();
 }

@@ -3,7 +3,12 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
-import { parseGenerationParams, describeParamsError, MODELS } from '../shared/params.js';
+import {
+  parseGenerationParams,
+  parseUpscaleParams,
+  describeParamsError,
+  MODELS,
+} from '../shared/params.js';
 import { isTerminal } from '../shared/job.js';
 import { VIBE_MIN, VIBE_MAX, parseVibeBundle } from '../shared/vibe.js';
 import { toWebp } from '../shared/image.js';
@@ -492,6 +497,57 @@ export function createServer({
       }
 
 
+      if (pathname === '/api/upscale' && req.method === 'POST') {
+        const user = requireUser(req, res);
+        if (!user) return;
+
+        if (!hasKey()) {
+          json(res, 503, {
+            error: 'no_keys',
+            message: 'No NovelAI key is configured.',
+          });
+          return;
+        }
+
+        let input;
+        try {
+          input = JSON.parse(await readBody(req, GENERATE_BODY_LIMIT));
+        } catch (err) {
+          const tooLarge = err?.code === 'too_large';
+          json(res, tooLarge ? 413 : 400, {
+            error: tooLarge ? 'too_large' : 'bad_json',
+            message: tooLarge
+              ? 'That image is too large to upscale.'
+              : 'Body must be JSON.',
+          });
+          return;
+        }
+
+        let params;
+        try {
+          params = parseUpscaleParams({ ...input, action: 'upscale' });
+        } catch (err) {
+          json(res, 400, {
+            error: err.code ?? 'invalid_params',
+            message: describeParamsError(err),
+            issues: err.issues ?? undefined,
+          });
+          return;
+        }
+
+        try {
+          const job = runner.start({ params });
+          json(res, 202, { jobId: job.id, state: job.state });
+        } catch (err) {
+          json(res, err.code === 'busy' ? 429 : 500, {
+            error: err.code ?? 'upscale_failed',
+            message: err.message,
+          });
+        }
+        return;
+      }
+
+
       if (pathname === '/api/suggest-tags') {
         const user = requireUser(req, res);
         if (!user) return;
@@ -574,7 +630,7 @@ export function createServer({
 
         try {
           const encoding = await encodeVibe(request);
-          json(res, 200, { encoding, balance: await accountBalance() });
+          json(res, 200, { encoding, balance: await accountBalance({ force: true }) });
         } catch (err) {
           const status = { encode_rejected: 400, unauthorized: 502 }[err.code] ?? 500;
           json(res, status, {

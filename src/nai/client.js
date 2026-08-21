@@ -17,6 +17,10 @@ const IMAGE_API = 'https://image.novelai.net';
 
 const MASK_CELL = 8;
 
+export const UPSCALE_SCALE = 4;
+
+const UPSCALE_MAX_OUTPUT_PIXELS = 7424 * 6656;
+
 const SUGGEST_TIMEOUT_MS = 6_000;
 
 const PRECISE_REF_SIZES = [
@@ -707,6 +711,87 @@ export class NaiClient {
     };
   }
 
+  async upscale({ image, model, scale = UPSCALE_SCALE }, signal) {
+    const { default: sharp } = await import('sharp');
+    const input = Buffer.from(image, 'base64');
+    const meta = await sharp(input).metadata();
+    const width = meta.width ?? 0;
+    const height = meta.height ?? 0;
+    if (!width || !height) {
+      throw new NaiError('That image has no readable dimensions.', {
+        code: 'upscale_bad_image',
+      });
+    }
+    if (width * scale * height * scale > UPSCALE_MAX_OUTPUT_PIXELS) {
+      throw new NaiError(
+        `A ${scale}x upscale of that image would be `
+        + `${width * scale}x${height * scale}, over what NovelAI allows.`,
+        { code: 'upscale_too_large' },
+      );
+    }
+
+    const controller = new AbortController();
+    const onAbort = () => controller.abort();
+    signal?.addEventListener('abort', onAbort, { once: true });
+    const timer = setTimeout(() => controller.abort(), this.#timeoutMs);
+
+    if (this.#log) console.log(`   → upscale  ${width}x${height}  x${scale}  ${model}`);
+
+    let res;
+    try {
+      res = await this.#fetch(`${IMAGE_API}/ai/upscale`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.#token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image, width, height, scale, model }),
+        signal: controller.signal,
+      });
+    } catch (err) {
+      if (controller.signal.aborted && !signal?.aborted) {
+        throw new NaiError('NovelAI took too long to upscale that image.', {
+          code: 'timeout',
+          retryable: true,
+        });
+      }
+      throw new NaiError(`Could not reach NovelAI: ${err.message}`, {
+        code: 'network',
+        retryable: true,
+      });
+    } finally {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', onAbort);
+    }
+
+    if (!res.ok) {
+      let detail = '';
+      try {
+        detail = await res.text();
+      } catch {
+      }
+      if (this.#log) console.log(`      ✗ ${res.status} ${detail.slice(0, 160)}`);
+      throw errorForStatus(res.status, detail);
+    }
+
+    const archive = Buffer.from(await res.arrayBuffer());
+    const files = unzip(archive);
+    const bytes = files[0]?.bytes;
+    if (!bytes) {
+      throw new NaiError('NovelAI returned no upscaled image.', { code: 'upscale_empty' });
+    }
+
+    if (this.#log) {
+      console.log(`      ✓ ${Math.round(bytes.length / 1024)}kb upscaled`);
+    }
+
+    return {
+      images: [{ bytes, seed: 0, metadata: readPngMetadata(bytes) }],
+      bytes,
+      seed: 0,
+    };
+  }
+
   async balance(signal) {
     const res = await this.#fetch(`${IMAGE_API}/user/subscription`, {
       headers: { Authorization: `Bearer ${this.#token}` },
@@ -928,7 +1013,19 @@ export function createTagSuggester(token, { fetch: fetchImpl, log = false } = {}
 export function createGenerator(token, { fetch: fetchImpl, log = false } = {}) {
   const client = new NaiClient({ token, fetch: fetchImpl, log });
 
-  return async (job, { signal }) => client.generate(job.params, signal);
+  return async (job, { signal }) => {
+    if (job.params.action === 'upscale') {
+      return client.upscale(
+        {
+          image: job.params.image,
+          model: job.params.model,
+          scale: job.params.scale,
+        },
+        signal,
+      );
+    }
+    return client.generate(job.params, signal);
+  };
 }
 
 export function createBalanceReader(

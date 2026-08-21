@@ -383,6 +383,38 @@ export const GenerationParamsSchema = z.object({
   });
 });
 
+export const UPSCALE_SCALES = [2, 4];
+export const DEFAULT_UPSCALE_SCALE = 4;
+export const UPSCALE_MAX_INPUT_PIXELS = 640 * 640;
+
+export const UPSCALE_MODELS = Object.freeze([V5_CURATED_MODEL, V5_FULL_MODEL]);
+
+export function supportsUpscale(model) {
+  return UPSCALE_MODELS.includes(model);
+}
+
+export const UpscaleParamsSchema = z.object({
+  action: z.literal('upscale'),
+  image: Base64Png,
+  model: z
+    .enum(modelKeys)
+    .default(DEFAULT_MODEL)
+    .refine(supportsUpscale, {
+      message: 'Only the Anime v5 models support standalone upscaling',
+    }),
+  scale: z
+    .number()
+    .int()
+    .refine((v) => UPSCALE_SCALES.includes(v), {
+      message: `Scale must be one of ${UPSCALE_SCALES.join(', ')}`,
+    })
+    .default(DEFAULT_UPSCALE_SCALE),
+});
+
+export function parseUpscaleParams(input) {
+  return UpscaleParamsSchema.parse(input ?? {});
+}
+
 export function isInpainting(params) {
   return Boolean(params.image && params.mask);
 }
