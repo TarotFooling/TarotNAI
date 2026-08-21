@@ -12,13 +12,14 @@ It's like totally cool yo, and the NAI in the title stands for NotAI, btw. Any r
 
 ## Important
 ### This UI is currently in **BETA**, it will have bugs and it will be missing something niche. It already has some important difficult features like focused inpainting, and canvases.
-However the following is missing:
-- Director Tools
+However the following is missing
 - Upscale
 - Generate Variations
 - Enhance 
+- Director Tools
 - Live preview as images generate
 - Tokenizer
+- Theme Customization 
 - 3D model support (never getting added to this UI)
 
 ## Requirements
