@@ -453,8 +453,6 @@
   padding: var(--nai-space-1) var(--nai-space-3);
   box-sizing: border-box;
   border: 0;
-  /* Reserve the scrollbar gutter on both layers so the mirror wraps identically
-     to the textarea once the content overflows. */
   scrollbar-gutter: stable;
   font-family: inherit;
   font-size: var(--nai-text-base);
@@ -1694,8 +1692,6 @@
   word-break: normal;
   tab-size: 4;
   resize: none;
-  /* Reserve the scrollbar gutter on both layers so the mirror wraps identically
-     to the textarea once the content overflows. */
   scrollbar-gutter: stable;
 }
 .character-card__input {

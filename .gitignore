@@ -9,3 +9,5 @@ images/
 
 .sessions.json
 .sessions.json.tmp
+
+.claude/

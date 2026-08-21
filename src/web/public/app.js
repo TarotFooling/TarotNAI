@@ -1566,8 +1566,6 @@ function syncEmphasis() {
   syncCharacterEmphasis();
 }
 
-// Character cards are rebuilt by renderCharacters(), so their mirrors are painted
-// on demand rather than bound once like the static prompt fields.
 function paintCardEmphasis(card) {
   if (!card) return;
   const on = emphasisOn();
