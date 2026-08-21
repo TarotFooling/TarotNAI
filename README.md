@@ -4,7 +4,7 @@ A self-hosted web front-end for NovelAI image generation that restores the old c
 machine, it talks to NovelAI with your own API key, and the images stay on your
 disk.
 
-It's like totally cool yo.
+It's like totally cool yo, and the NAI in the title stands for NotAI, btw. Any resemblance to the abbreviation of a popular image service is pure coincidence. 
 
 # This project is not affiliated with NovelAI. Any bugs experienced while using the UI should not be reported to NAI but instead to [issues](https://github.com/TarotFooling/TarotNAI/issues). I will perform voodoo on you if you bother the NAI team about this. 
 
