@@ -2903,8 +2903,40 @@ const UPSCALE_MAX_OUTPUT_PIXELS = 7424 * 6656;
 const VARIATION_IMAGE_COUNT = 3;
 const VARIATION_SURCHARGE = 1;
 const VARIATION_STRENGTH = 0.7;
-const ENHANCE_STRENGTH = 0.35;
 const ENHANCE_NOISE = 0;
+
+const ENHANCE_DEFAULT_MAGNITUDE = 2;
+
+const ENHANCE_MAX_SIZES = Object.freeze([
+  { width: 1664, height: 1856 },
+  { width: 1760, height: 1760 },
+  { width: 1856, height: 1664 },
+]);
+
+const ENHANCE_ANLAS_PER_MP = Object.freeze({
+  1: 5.75,
+  2: 11.25,
+  3: 14.25,
+  4: 17.25,
+  5: 19.85,
+});
+
+const ENHANCE_MAGNITUDE_STRENGTH = Object.freeze({
+  1: 0.3,
+  2: 0.4,
+  3: 0.5,
+  4: 0.6,
+  5: 0.7,
+});
+
+function magnitudeStrength(magnitude) {
+  return ENHANCE_MAGNITUDE_STRENGTH[magnitude] ?? 0.4;
+}
+
+function enhanceAnlas({ width, height, magnitude }) {
+  const rate = ENHANCE_ANLAS_PER_MP[magnitude] ?? ENHANCE_ANLAS_PER_MP[ENHANCE_DEFAULT_MAGNITUDE];
+  return Math.ceil((rate * width * height) / 1e6);
+}
 
 const V5_ANLAS_MULTIPLIER = 1.5;
 
@@ -4605,6 +4637,20 @@ const useAsBaseButton = document.getElementById('use-as-base');
 const editImageButton = document.getElementById('edit-image');
 const inpaintImageButton = document.getElementById('inpaint-image');
 const enhanceButton = document.getElementById('enhance');
+const enhancePanel = document.getElementById('enhance-panel');
+const enhanceClose = document.getElementById('enhance-close');
+const enhanceAmount = document.getElementById('enhance-amount');
+const enhanceAdvanced = document.getElementById('enhance-advanced');
+const enhanceAdvancedToggle = document.getElementById('enhance-advanced-toggle');
+const enhanceMagnitude = document.getElementById('enhance-magnitude');
+const enhanceMagnitudeRange = document.getElementById('enhance-magnitude-range');
+const enhanceStrength = document.getElementById('enhance-strength');
+const enhanceStrengthRange = document.getElementById('enhance-strength-range');
+const enhanceNoise = document.getElementById('enhance-noise');
+const enhanceNoiseRange = document.getElementById('enhance-noise-range');
+const enhanceRun = document.getElementById('enhance-run');
+const enhanceCostValue = document.getElementById('enhance-cost');
+
 const variationsButton = document.getElementById('generate-variations');
 const upscaleButton = document.getElementById('upscale');
 const copyClipboardButton = document.getElementById('copy-clipboard');
@@ -5119,7 +5165,7 @@ function renderHistory() {
 function clearCanvas() {
   const canvas = document.querySelector('.canvas');
 
-  const keep = new Set([canvasProgress, quickAction, resultRow]);
+  const keep = new Set([canvasProgress, quickAction, resultRow, enhancePanel]);
   for (const child of [...canvas.children]) {
     if (!keep.has(child)) child.remove();
   }
@@ -5197,6 +5243,7 @@ let currentArchivedId = null;
 function revealResultTools(src, seed, { id = null, archivedId = null } = {}) {
   currentImage = src;
   currentImageSize = null;
+  closeEnhancePanel();
   currentHistoryId = id;
   currentArchivedId = archivedId;
   quickAction.hidden = false;
@@ -5212,6 +5259,10 @@ function revealResultTools(src, seed, { id = null, archivedId = null } = {}) {
     if (currentImage !== src) return;
     currentImageSize = { width: probe.naturalWidth, height: probe.naturalHeight };
     syncResultCosts();
+    if (!enhancePanel.hidden) {
+      syncEnhanceAmount();
+      syncEnhanceCost();
+    }
   };
   probe.src = src;
 
@@ -5297,38 +5348,130 @@ async function runResultAction(url, params, { failure, anlas = 0 }) {
   }
 }
 
-enhanceButton.addEventListener('click', async () => {
-  if (!currentImage) return;
+let enhanceAmountChoice = 'max';
 
-  const size = await measureImage(currentImage);
-  if (!size) {
-    reportError('That image could not be read.');
-    return;
+function enhanceTargets() {
+  if (!currentImageSize) return {};
+  const { width, height } = currentImageSize;
+  const out = { 1: fitToValid(width, height) };
+
+  const grown = fitToValid(Math.round(width * 1.5), Math.round(height * 1.5));
+  if (grown.width * grown.height > width * height) out[1.5] = grown;
+
+  const max = largestFor(width / height);
+  if (max.width * max.height > (out[1.5] ?? out[1]).width * (out[1.5] ?? out[1]).height) {
+    out.max = max;
   }
+  return out;
+}
 
-  const fitted = fitToValid(size.width, size.height);
-  const params = resultActionParams(ENHANCE_STRENGTH);
-  params.resolution = `${fitted.width},${fitted.height}`;
+function largestFor(ratio) {
+  const best = ENHANCE_MAX_SIZES.reduce((winner, size) => {
+    const d = Math.abs(Math.log(ratio / (size.width / size.height)));
+    return d < winner.d ? { size, d } : winner;
+  }, { size: ENHANCE_MAX_SIZES[0], d: Infinity }).size;
+  return { ...best };
+}
+
+function enhanceTarget() {
+  const targets = enhanceTargets();
+  return targets[enhanceAmountChoice] ?? targets[1] ?? null;
+}
+
+function syncEnhanceAmount() {
+  const targets = enhanceTargets();
+  for (const button of enhanceAmount.querySelectorAll('.enhance-amount__button')) {
+    const key = button.dataset.amount;
+    const target = targets[key];
+    button.disabled = !target;
+    button.setAttribute('aria-checked', String(key === enhanceAmountChoice));
+    button.title = target ? `${target.width}x${target.height}` : 'Not available for this image';
+  }
+  if (!targets[enhanceAmountChoice]) {
+    enhanceAmountChoice = targets.max ? 'max' : (targets[1.5] ? '1.5' : '1');
+    for (const button of enhanceAmount.querySelectorAll('.enhance-amount__button')) {
+      button.setAttribute('aria-checked', String(button.dataset.amount === enhanceAmountChoice));
+    }
+  }
+}
+
+function syncEnhanceCost() {
+  const target = enhanceTarget();
+  const magnitude = Number(enhanceMagnitude.value) || ENHANCE_DEFAULT_MAGNITUDE;
+  const anlas = target ? enhanceAnlas({ ...target, magnitude }) : 0;
+  enhanceCostValue.textContent = String(anlas);
+  enhanceRun.disabled = !target;
+  enhanceRun.title = target
+    ? `Enhance to ${target.width}x${target.height} (${anlas} Anlas)`
+    : 'No image to enhance';
+}
+
+function openEnhancePanel() {
+  if (!currentImage) return;
+  enhancePanel.hidden = false;
+  syncEnhanceAmount();
+  syncEnhanceCost();
+}
+
+function closeEnhancePanel() {
+  enhancePanel.hidden = true;
+}
+
+enhanceButton.addEventListener('click', () => {
+  if (enhancePanel.hidden) openEnhancePanel();
+  else closeEnhancePanel();
+});
+
+enhanceClose.addEventListener('click', closeEnhancePanel);
+
+enhanceAmount.addEventListener('click', (event) => {
+  const button = event.target.closest('.enhance-amount__button');
+  if (!button || button.disabled) return;
+  enhanceAmountChoice = button.dataset.amount;
+  syncEnhanceAmount();
+  syncEnhanceCost();
+});
+
+enhanceAdvancedToggle.addEventListener('click', () => {
+  const shown = !enhanceAdvanced.hidden;
+  enhanceAdvanced.hidden = shown;
+  enhanceAdvancedToggle.setAttribute('aria-expanded', String(!shown));
+  enhanceAdvancedToggle.textContent = shown ? 'Show Advanced' : 'Hide Advanced';
+});
+
+function linkEnhanceSlider(number, range, onChange) {
+  const push = (from, to) => {
+    to.value = from.value;
+    onChange?.();
+  };
+  range.addEventListener('input', () => push(range, number));
+  number.addEventListener('input', () => push(number, range));
+}
+
+linkEnhanceSlider(enhanceMagnitude, enhanceMagnitudeRange, syncEnhanceCost);
+linkEnhanceSlider(enhanceStrength, enhanceStrengthRange);
+linkEnhanceSlider(enhanceNoise, enhanceNoiseRange);
+
+enhanceRun.addEventListener('click', async () => {
+  if (!currentImage) return;
+  const target = enhanceTarget();
+  if (!target) return;
+
+  const magnitude = Number(enhanceMagnitude.value) || ENHANCE_DEFAULT_MAGNITUDE;
+  const strength = enhanceAdvanced.hidden
+    ? magnitudeStrength(magnitude)
+    : Number(enhanceStrength.value);
+
+  const params = resultActionParams(strength);
+  params.resolution = `${target.width},${target.height}`;
   params.seed = 0;
+  params.noise = enhanceAdvanced.hidden ? 0 : Number(enhanceNoise.value);
 
-  const steps = Number(document.getElementById('steps').value) || 0;
-  const enhanceCost = isFreeGeneration({
-    width: fitted.width,
-    height: fitted.height,
-    steps,
-    imageCount: 1,
-  })
-    ? 0
-    : generationAnlas({
-      width: fitted.width,
-      height: fitted.height,
-      steps,
-      strength: ENHANCE_STRENGTH,
-    });
+  closeEnhancePanel();
 
   await runResultAction('/api/generate', params, {
     failure: 'The enhance pass failed.',
-    anlas: enhanceCost,
+    anlas: enhanceAnlas({ ...target, magnitude }),
   });
 });
 

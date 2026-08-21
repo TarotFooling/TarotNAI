@@ -1067,6 +1067,81 @@
       <span class="canvas__placeholder-icon"></span>
     </div>
 
+    <div class="enhance-panel" id="enhance-panel" role="dialog" aria-modal="false"
+         aria-labelledby="enhance-panel-title" hidden>
+      <div class="enhance-panel__head">
+        <span class="icon icon--sm icon-sparkles" aria-hidden="true"></span>
+        <span class="enhance-panel__title" id="enhance-panel-title">Enhance Image</span>
+        <button class="enhance-panel__close" type="button" id="enhance-close"
+                aria-label="close enhance">
+          <span class="icon icon-close-x" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <div class="enhance-panel__body">
+        <div class="enhance-panel__amount">
+          <div class="enhance-panel__label" id="enhance-amount-label">Upscale Amount</div>
+          <div class="enhance-amount" id="enhance-amount" role="radiogroup"
+               aria-labelledby="enhance-amount-label">
+            <button class="enhance-amount__button" type="button" role="radio"
+                    data-amount="1" aria-checked="false">1x</button>
+            <button class="enhance-amount__button" type="button" role="radio"
+                    data-amount="1.5" aria-checked="false">1.5x</button>
+            <button class="enhance-amount__button" type="button" role="radio"
+                    data-amount="max" aria-checked="true">
+              <span class="enhance-amount__max">Max<span
+                    class="icon icon-sparkles enhance-amount__spark"
+                    aria-hidden="true"></span></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="enhance-panel__tune">
+          <div class="slider-field" id="enhance-magnitude-field">
+            <div class="slider-field__row">
+              <label class="slider-field__label" for="enhance-magnitude">Magnitude</label>
+              <input class="slider-field__number" id="enhance-magnitude" type="number"
+                     value="2" min="1" max="5" step="1" style="--digits: 1">
+            </div>
+            <input class="slider-field__range" id="enhance-magnitude-range" type="range"
+                   value="2" min="1" max="5" step="1" aria-label="Magnitude">
+          </div>
+
+          <div class="enhance-panel__advanced" id="enhance-advanced" hidden>
+            <div class="slider-field">
+              <div class="slider-field__row">
+                <label class="slider-field__label" for="enhance-strength">Strength</label>
+                <input class="slider-field__number" id="enhance-strength" type="number"
+                       value="0.5" min="0.01" max="0.99" step="0.01" style="--digits: 4">
+              </div>
+              <input class="slider-field__range" id="enhance-strength-range" type="range"
+                     value="0.5" min="0.01" max="0.99" step="0.01" aria-label="Strength">
+            </div>
+            <div class="slider-field">
+              <div class="slider-field__row">
+                <label class="slider-field__label" for="enhance-noise">Noise</label>
+                <input class="slider-field__number" id="enhance-noise" type="number"
+                       value="0" min="0" max="0.99" step="0.01" style="--digits: 4">
+              </div>
+              <input class="slider-field__range" id="enhance-noise-range" type="range"
+                     value="0" min="0" max="0.99" step="0.01" aria-label="Noise">
+            </div>
+          </div>
+
+          <button class="enhance-panel__toggle" type="button" id="enhance-advanced-toggle"
+                  aria-expanded="false" aria-controls="enhance-advanced">Show Advanced</button>
+        </div>
+      </div>
+
+      <button class="enhance-panel__run" type="button" id="enhance-run">
+        <span>Enhance</span>
+        <span class="enhance-panel__cost">
+          <span id="enhance-cost">0</span>
+          <span class="icon icon--anla icon-anla" aria-hidden="true"></span>
+        </span>
+      </button>
+    </div>
+
     <div class="quick-action" id="quick-action" hidden>
       <button class="result-tool" type="button" id="enhance"
               aria-label="Enhance">
