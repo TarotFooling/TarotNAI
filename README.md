@@ -6,8 +6,11 @@ disk.
 
 It's like totally cool yo.
 
+
+![The TarotNAI interface](docs/screenshot.png)
+
 ## Important
-# This UI is currently in **BETA**, it will have bugs and it will be missing something niche. It already has some important difficult features like focused inpainting, and canvases.
+### This UI is currently in **BETA**, it will have bugs and it will be missing something niche. It already has some important difficult features like focused inpainting, and canvases.
 However the following is missing:
 - Director Tools
 - Upscale
@@ -17,7 +20,6 @@ However the following is missing:
 - Tokenizer
 - 3D model support (never getting added to this UI)
 
-![The TarotNAI interface](docs/screenshot.png)
 
 - Prompt editing with emphasis, character prompts and positioning
 - img2img and inpainting with a canvas editor
