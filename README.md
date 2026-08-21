@@ -6,7 +6,7 @@ disk.
 
 It's like totally cool yo.
 
-# This project is not affiliated with NovelAI any issues experienced while using the UI should not be reported to NAI but instead to issues. I will perform voodoo on you if you bother the NAI team about this. 
+# This project is not affiliated with NovelAI. Any issues experienced while using the UI should not be reported to NAI but instead to issues. I will perform voodoo on you if you bother the NAI team about this. 
 
 ![The TarotNAI interface](docs/screenshot.png)
 
