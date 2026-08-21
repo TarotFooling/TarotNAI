@@ -1551,8 +1551,10 @@ function paintEmphasis({ input, mirror }) {
   mirror.scrollLeft = input.scrollLeft;
 }
 
+const emphasisOn = () => emphasisToggle?.checked !== false;
+
 function syncEmphasis() {
-  const on = emphasisToggle?.checked !== false;
+  const on = emphasisOn();
   for (const field of emphasisFields) {
     field.wrap.classList.toggle('prompt-field--highlight', on);
     if (!on || field.wrap.offsetParent === null) {
@@ -1561,6 +1563,26 @@ function syncEmphasis() {
     }
     paintEmphasis(field);
   }
+  syncCharacterEmphasis();
+}
+
+// Character cards are rebuilt by renderCharacters(), so their mirrors are painted
+// on demand rather than bound once like the static prompt fields.
+function paintCardEmphasis(card) {
+  if (!card) return;
+  const on = emphasisOn();
+  card.classList.toggle('character-card--highlight', on);
+  const mirror = card.querySelector('[data-role="mirror"]');
+  if (!mirror) return;
+  if (!on) {
+    mirror.replaceChildren();
+    return;
+  }
+  paintEmphasis({ input: card.querySelector('[data-role="input"]'), mirror });
+}
+
+function syncCharacterEmphasis() {
+  for (const card of document.querySelectorAll('.character-card')) paintCardEmphasis(card);
 }
 
 for (const field of emphasisFields) {
@@ -2068,6 +2090,8 @@ function renderCharacters() {
       const suggest = attachSuggest(input, q('suggest'));
       if (suggest) characterSuggestFields.push(suggest);
 
+      paintCardEmphasis(card);
+
       const trigger = card.querySelector('[data-action="position"]');
       trigger.disabled = globalAutoPosition;
       q('position-label').textContent = globalAutoPosition ? 'AI’s Choice' : 'Adjust';
@@ -2241,8 +2265,23 @@ characterList.addEventListener('input', (event) => {
     .querySelector('[data-role="token-fill"]')
     .style.width = `${(used * 100).toFixed(1)}%`;
 
+  paintCardEmphasis(input.closest('.character-card'));
+
   scheduleSave();
 });
+
+characterList.addEventListener(
+  'scroll',
+  (event) => {
+    const input = event.target.closest?.('[data-role="input"]');
+    if (!input) return;
+    const mirror = input.closest('.character-card').querySelector('[data-role="mirror"]');
+    if (!mirror) return;
+    mirror.scrollTop = input.scrollTop;
+    mirror.scrollLeft = input.scrollLeft;
+  },
+  true,
+);
 
 positionGlobalToggle.addEventListener('change', () => {
   globalAutoPosition = positionGlobalToggle.checked;

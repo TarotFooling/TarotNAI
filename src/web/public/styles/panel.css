@@ -453,6 +453,9 @@
   padding: var(--nai-space-1) var(--nai-space-3);
   box-sizing: border-box;
   border: 0;
+  /* Reserve the scrollbar gutter on both layers so the mirror wraps identically
+     to the textarea once the content overflows. */
+  scrollbar-gutter: stable;
   font-family: inherit;
   font-size: var(--nai-text-base);
   line-height: var(--nai-line-base);
@@ -1670,7 +1673,6 @@
 
 .character-card__well {
   position: relative;
-  padding: var(--nai-space-1) var(--nai-space-3);
   background-color: var(--nai-bg-input);
 }
  .character-card__input,
@@ -1678,7 +1680,8 @@
   display: block;
   width: 100%;
   height: 96px;
-  padding: 0;
+  padding: var(--nai-space-1) var(--nai-space-3);
+  box-sizing: border-box;
   border: 0;
   background: none;
   color: var(--nai-text);
@@ -1691,6 +1694,9 @@
   word-break: normal;
   tab-size: 4;
   resize: none;
+  /* Reserve the scrollbar gutter on both layers so the mirror wraps identically
+     to the textarea once the content overflows. */
+  scrollbar-gutter: stable;
 }
 .character-card__input {
   position: relative;
@@ -1700,9 +1706,8 @@
 }
 .character-card__mirror {
   position: absolute;
-  inset: var(--nai-space-1) var(--nai-space-3);
+  inset: 0;
   z-index: 0;
-  height: auto;
   color: transparent;
   overflow: hidden;
   pointer-events: none;
