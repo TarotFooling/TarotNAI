@@ -16,6 +16,7 @@ However the following is missing
 - Director Tools
 - Live preview as images generate
 - Tokenizer
+- Perfect mobile mode (It works, but sometimes weird)
 - Theme Customization 
 - 3D model support (never getting added to this UI)
 
