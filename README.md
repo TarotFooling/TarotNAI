@@ -16,7 +16,7 @@ However the following is missing:
 - Upscale
 - Generate Variations
 - Enhance 
-- Live image preview
+- Live preview as images generate
 - Tokenizer
 - 3D model support (never getting added to this UI)
 
