@@ -48,7 +48,7 @@ Then open <http://localhost:8744>.
 
 ## Sign-in
 
-The app is yours alone. By default it binds to `127.0.0.1`, so only your own
+The app is yours alone... By default it binds to `127.0.0.1`, so only your own
 machine can reach it and there is no sign-in screen at all.
 
 If you want to reach it from another device on your own network, set
