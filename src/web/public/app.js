@@ -5548,6 +5548,13 @@ keyGateForm?.addEventListener('submit', async (event) => {
   keyGateSubmit.disabled = true;
   setKeyGateNote('Checking that key with NovelAI...');
 
+  // NovelAI's subscription endpoint is slow when it is cold, often around ten
+  // seconds on the first call, which this always is. Say so rather than leaving
+  // the first message sitting there looking stuck.
+  const slowNotice = setTimeout(() => {
+    setKeyGateNote('Still checking. NovelAI is slow to answer the first request.');
+  }, 3000);
+
   let res;
   let body = {};
   try {
@@ -5558,10 +5565,13 @@ keyGateForm?.addEventListener('submit', async (event) => {
     });
     body = await res.json().catch(() => ({}));
   } catch {
+    clearTimeout(slowNotice);
     keyGateSubmit.disabled = false;
     setKeyGateNote('Could not reach the server. Try again.', true);
     return;
   }
+
+  clearTimeout(slowNotice);
 
   if (!res.ok) {
     keyGateSubmit.disabled = false;

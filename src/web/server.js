@@ -416,16 +416,25 @@ export function createServer({
 
         // Check the key against NovelAI before it touches disk, so a typo is
         // caught here rather than on the first generate.
+        //
+        // The default 120s timeout is sized for generation. This call is a
+        // person waiting on a form, and /user/subscription can take ~10s when
+        // it is cold, so allow for that and give up well short of two minutes.
         let balance;
         try {
-          balance = await createBalanceReader(key, { log: false })({ force: true });
+          balance = await createBalanceReader(key, { log: false, timeoutMs: 30_000 })({
+            force: true,
+          });
         } catch (err) {
           const bad = err?.code === 'unauthorized';
+          const slow = err?.code === 'timeout';
           json(res, bad ? 400 : 502, {
-            error: bad ? 'invalid_key' : 'nai_unreachable',
+            error: bad ? 'invalid_key' : slow ? 'nai_timeout' : 'nai_unreachable',
             message: bad
               ? 'NovelAI did not accept that key. Check you copied the whole token.'
-              : 'Could not reach NovelAI to check that key. Try again in a moment.',
+              : slow
+                ? 'NovelAI did not answer in time. Your key may be fine, so try again.'
+                : 'Could not reach NovelAI to check that key. Try again in a moment.',
           });
           return;
         }

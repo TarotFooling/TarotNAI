@@ -934,10 +934,18 @@ export function createGenerator(token, { fetch: fetchImpl, log = false } = {}) {
   return async (job, { signal }) => client.generate(job.params, signal);
 }
 
-export function createBalanceReader(token, { fetch: fetchImpl, log = false, ttlMs = 30_000 } = {}) {
+export function createBalanceReader(
+  token,
+  { fetch: fetchImpl, log = false, ttlMs = 30_000, timeoutMs } = {},
+) {
   if (!token) return null;
 
-  const client = new NaiClient({ token, fetch: fetchImpl, log });
+  const client = new NaiClient({
+    token,
+    fetch: fetchImpl,
+    log,
+    ...(timeoutMs ? { timeoutMs } : {}),
+  });
   let cached = null;
   let inFlight = null;
 
