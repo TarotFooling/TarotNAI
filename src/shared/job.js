@@ -1,7 +1,5 @@
 import { randomUUID } from 'node:crypto';
 
-// A job starts running the moment it is created - there is no queued state,
-// because generations are never deferred or batched.
 export const JobState = Object.freeze({
   RUNNING: 'running',
   DONE: 'done',
