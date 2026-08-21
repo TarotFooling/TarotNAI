@@ -12,7 +12,6 @@ export function loadState() {
   try {
     let raw = localStorage.getItem(TEXT_KEY);
     if (!raw) {
-      // Carry over state written under the pre-rename key, once.
       raw = localStorage.getItem(LEGACY_TEXT_KEY);
       if (raw) {
         localStorage.setItem(TEXT_KEY, raw);
@@ -104,8 +103,6 @@ function openLegacyDb() {
     }
     let request;
     try {
-      // Do not create the legacy DB if it is already gone: version 1 with no
-      // upgrade handler means an absent DB opens empty and is dropped below.
       request = indexedDB.open(LEGACY_DB_NAME, DB_VERSION);
     } catch {
       resolve(null);
@@ -129,7 +126,6 @@ function loadLegacyImages() {
         try {
           tx = db.transaction(IMAGE_STORE, 'readonly');
         } catch {
-          // Fresh/empty legacy DB has no store - nothing to migrate.
           db.close();
           resolve(null);
           return;
@@ -151,7 +147,6 @@ export async function loadImages() {
   const current = await withStore('readonly', (store) => store.get(IMAGE_KEY));
   if (current) return current;
 
-  // Carry over images written under the pre-rename database, once.
   const legacy = await loadLegacyImages();
   if (!legacy) return null;
   await saveImages(legacy);

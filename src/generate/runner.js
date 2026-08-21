@@ -7,10 +7,6 @@ export const FailureCode = Object.freeze({
   SHUTDOWN: 'shutdown',
 });
 
-// Runs one generation at a time, and only one. There is no queue: a request
-// that arrives while a generation is in flight is refused, not deferred. This
-// is a single-user tool driving a single NovelAI account by hand, so requests
-// are never batched or run ahead on the user's behalf.
 export class Runner extends EventEmitter {
   #jobs = new Map();
   #running = null;
@@ -35,7 +31,6 @@ export class Runner extends EventEmitter {
     return this.#running !== null;
   }
 
-  // Starts a generation immediately, or throws `busy` if one is already running.
   start({ params }) {
     if (this.#stopped) throw new Error('Runner is stopped');
 
@@ -68,8 +63,6 @@ export class Runner extends EventEmitter {
     return { running: this.#running ? 1 : 0 };
   }
 
-  // Releases the slot if a generation has hung past the timeout, so a lost
-  // request cannot lock the app out forever.
   sweepTimedOut() {
     if (!this.#running || this.#expiresAt === null || this.#now() < this.#expiresAt) return null;
 

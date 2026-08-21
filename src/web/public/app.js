@@ -2679,7 +2679,6 @@ const anlasValue = document.getElementById('anlas-value');
 
 let accountBalance = null;
 
-// NovelAI subscription tiers, as returned by /user/subscription.
 const TIER_NAMES = { 0: 'Paper', 1: 'Tablet', 2: 'Scroll', 3: 'Opus' };
 
 function renderAccountTier() {
@@ -2699,10 +2698,6 @@ function renderAccountBalance() {
 
   if (anlasGroup) anlasGroup.hidden = false;
 
-  // NovelAI splits the balance in two: Anlas bought outright, and the monthly
-  // allowance that comes with a subscription. Both are spendable, and a paid
-  // account can easily have all of its Anlas in either one, so the headline
-  // number is the total rather than just the purchased half.
   const purchased = accountBalance.anlas ?? 0;
   const allowance = accountBalance.subscriptionAnlas ?? 0;
   anlasValue.textContent = String(purchased + allowance);
@@ -2731,8 +2726,6 @@ function applyAccountBalance(balance) {
   renderAccountBalance();
   renderAccountTier();
   renderOpusUsage();
-  // Whether a generation is free depends on the account, so the cost badge has
-  // to be recomputed once the balance lands.
   syncCost();
   if (vibesReady) renderVibes();
 }
@@ -2748,7 +2741,6 @@ const opusPanelRefill = document.getElementById('opus-panel-refill');
 const opusAlwaysShow = document.getElementById('opus-always-show');
 const opusAlwaysShowSetting = document.getElementById('opus-always-show-setting');
 
-// "17h 32m" / "48m" - how long until the allowance is full again.
 function formatOpusEta(seconds) {
   const total = Math.max(0, Math.round(seconds));
   const hours = Math.floor(total / 3600);
@@ -2792,7 +2784,6 @@ function renderOpusUsage() {
 
 opusAlwaysShow?.addEventListener('change', renderOpusUsage);
 
-// "More Info" opens Settings, where the full explanation lives.
 opusBarInfo?.addEventListener('click', () => {
   setSettingsOpen(true);
 });
@@ -2850,8 +2841,6 @@ function removeVibe(id) {
   scheduleSave({ images: true });
 }
 
-// Opus includes free generations at up to 1 megapixel, 28 steps or fewer, one
-// image at a time. Anything beyond that bills Anlas as normal.
 const FREE_MAX_PIXELS = 1024 * 1024;
 const FREE_MAX_STEPS = 28;
 
@@ -5559,9 +5548,6 @@ function setKeyGateNote(text, invalid = false) {
   keyGate?.classList.toggle('key-gate--invalid', invalid);
 }
 
-// There is deliberately no way to dismiss this. Without a key the app cannot
-// generate, so letting it be closed would just put the user back in front of a
-// UI where every button fails.
 function showKeyGate(canSave) {
   if (!keyGate) return;
   keyGate.hidden = false;
@@ -5592,9 +5578,6 @@ keyGateForm?.addEventListener('submit', async (event) => {
   keyGateSubmit.disabled = true;
   setKeyGateNote('Checking that key with NovelAI...');
 
-  // NovelAI's subscription endpoint is slow when it is cold, often around ten
-  // seconds on the first call, which this always is. Say so rather than leaving
-  // the first message sitting there looking stuck.
   const slowNotice = setTimeout(() => {
     setKeyGateNote('Still checking. NovelAI is slow to answer the first request.');
   }, 3000);
@@ -5667,8 +5650,6 @@ async function checkSession() {
   applyAccountBalance(body.balance);
   showMenuProfile(body.user);
 
-  // Last, so the app behind the gate is fully set up and is ready to use the
-  // moment a key is accepted.
   if (!body.hasKey) showKeyGate(body.canSaveKey);
 }
 

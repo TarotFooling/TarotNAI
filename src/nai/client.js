@@ -717,9 +717,6 @@ export class NaiClient {
     const body = await res.json();
     const steps = body?.trainingStepsLeft ?? {};
 
-    // Opus tiers include an allowance of free V5 generations that refills over
-    // time. `percent` is how much is left; `timeUntilNextPercent` is seconds
-    // until the next whole percent returns.
     const usage = body?.usage;
     const opus =
       usage && typeof usage.percent === 'number'
@@ -966,7 +963,6 @@ export function createBalanceReader(
     if (force) return fetchFresh();
     if (!cached) return fetchFresh();
 
-    // we don't want to wait on NAI because they are stinky and laggy
     if (Date.now() - cached.at >= ttlMs) fetchFresh().catch(() => {});
     return cached.value;
   };

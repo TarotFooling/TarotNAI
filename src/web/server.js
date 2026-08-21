@@ -206,10 +206,6 @@ export function createServer({
   };
 
 
-  // Accepting a key over HTTP is only safe when the person posting it had to
-  // prove they are the owner. With no sign-in that proof is "can reach the
-  // port", which is fine on loopback and not fine on a LAN, so the setup gate
-  // closes there and .env stays the only way in.
   const loopback = config.host === '127.0.0.1' || config.host === 'localhost' || config.host === '::1';
   const keySavingAllowed = () => Boolean(onKeySaved) && (auth.mode !== 'open' || loopback);
 
@@ -414,12 +410,6 @@ export function createServer({
           return;
         }
 
-        // Check the key against NovelAI before it touches disk, so a typo is
-        // caught here rather than on the first generate.
-        //
-        // The default 120s timeout is sized for generation. This call is a
-        // person waiting on a form, and /user/subscription can take ~10s when
-        // it is cold, so allow for that and give up well short of two minutes.
         let balance;
         try {
           balance = await createBalanceReader(key, { log: false, timeoutMs: 30_000 })({
