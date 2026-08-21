@@ -1,0 +1,68 @@
+@font-face {
+  font-family: 'Source Sans Pro';
+  src: url('../fonts/source-sans-pro-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Source Sans Pro';
+  src: url('../fonts/source-sans-pro-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Source Sans Pro';
+  src: url('../fonts/source-sans-pro-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Eczar';
+  src: url('../fonts/eczar-400.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --nai-bg-input: rgb(14, 15, 33);
+  --nai-bg-page: rgb(19, 21, 44);
+  --nai-bg-panel: rgb(25, 27, 49);
+  --nai-bg-raised: rgb(34, 37, 63);
+
+  --nai-text: rgb(255, 255, 255);
+  --nai-text-muted: rgba(255, 255, 255, 0.7);
+  --nai-heading-opacity: 0.5;
+
+  --nai-accent: rgb(245, 243, 194);
+
+  --nai-border: 1px solid rgb(34, 37, 63);
+  --nai-divider: rgb(19, 21, 44);
+
+  --nai-radius: 3px;
+  --nai-radius-lg: 5px;
+
+  --nai-font: "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans",
+    "Helvetica Neue", sans-serif;
+  --nai-font-display: Eczar, Georgia, serif;
+  --nai-text-xs: 12.8px;
+  --nai-text-sm: 14px;
+  --nai-text-base: 16px;
+  --nai-text-lg: 22px;
+  --nai-line-sm: 21px;
+  --nai-line-base: 24px;
+
+  --nai-space-1: 5px;
+  --nai-space-2: 10px;
+  --nai-space-3: 15px;
+  --nai-space-4: 20px;
+
+  --nai-panel-width: 450px;
+  --nai-history-width: 140px;
+  --nai-history-thumb: 100px;
+  --nai-panel-inset: 20px;
+}

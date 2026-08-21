@@ -1,0 +1,17 @@
+{
+  "name": "tarotnai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Self-hosted NovelAI image-generation front-end.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/index.js"
+  },
+  "dependencies": {
+    "sharp": "^0.35.3",
+    "zod": "^3.23.8"
+  }
+}

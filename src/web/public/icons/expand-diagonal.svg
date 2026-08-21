@@ -1,0 +1,22 @@
+<!--
+  The expand arrow on the right half of the resolution control.
+
+  HAND-DRAWN, not NAI's asset. The capture recorded this button with
+  `maskImage: null` and `identifiedBy: "NONE"` - it found the 42x42 element and
+  never resolved a glyph for it, so there is no hashed URL to download the way
+  clipboard/save/seed/wand_sparkles were. Traced from the live UI screenshot: a
+  double-headed diagonal running bottom-left to top-right, with the two heads as
+  open corner brackets.
+
+  Stroke is 1.5px, NOT the 2px the other hand-drawn glyphs here use. Those
+  (lasso, blur, clone-stamp, sliders) all sit in the Draw toolbar among other
+  STROKED icons, where 2px is the matching weight. This one sits beside
+  NAI's own downloaded assets - clipboard, save, seed, pin - which are all
+  FILLED paths. A 2px stroke reads noticeably heavier next to a filled glyph at
+  the same box size, so matching the neighbours means thinning it.
+-->
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M13.5 2.5L2.5 13.5" stroke="black" stroke-width="0.8" stroke-linecap="round"/>
+  <path d="M9.5 2.5H13.5V6.5" stroke="black" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M6.5 13.5H2.5V9.5" stroke="black" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

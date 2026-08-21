@@ -1,0 +1,1700 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="darkreader-lock">
+<title>TarotNAI</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="favicon-128.png" sizes="128x128">
+<link rel="apple-touch-icon" href="favicon-128.png">
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/shell.css">
+<link rel="stylesheet" href="styles/panel.css">
+<link rel="stylesheet" href="styles/draw.css">
+<link rel="stylesheet" href="styles/toast.css">
+<link rel="stylesheet" href="styles/mobile.css">
+</head>
+<body>
+<div class="image-gen-page">
+
+  <aside class="settings-panel" id="settings-panel">
+
+    <header class="panel-header">
+      <span class="brand-mark icon-crow" aria-label="TarotNAI" role="img"></span>
+      <div class="anlas-group">
+        <div class="anlas-readout">
+          <span class="anlas-readout__label">Anlas:</span>
+          <strong id="anlas-value">0</strong>
+          <span class="icon icon--anla icon-anla" aria-hidden="true"></span>
+        </div>
+      </div>
+      <button class="hamburger" type="button" id="menu" aria-label="Menu"
+              aria-expanded="false" aria-controls="main-menu">
+        <span class="icon icon--sm icon-hamburger" aria-hidden="true"></span>
+      </button>
+    </header>
+
+    <div class="main-menu" id="main-menu">
+      <div class="main-menu__panel">
+
+        <div class="main-menu__profile">
+          <img class="main-menu__avatar" id="menu-avatar" alt="" aria-hidden="true"
+               src="icons/image-placeholder.svg" width="64" height="64">
+          <div class="main-menu__identity">
+            <div class="main-menu__name" id="menu-username">Signed out</div>
+            <div class="main-menu__tier" id="menu-tier"></div>
+          </div>
+        </div>
+
+        <div class="main-menu__heading">Account</div>
+
+        <button class="main-menu__item" type="button" id="menu-account-settings" disabled>
+          <span class="icon icon--sm icon-settings" aria-hidden="true"></span>
+          <span>Account Settings</span>
+        </button>
+
+        <a class="main-menu__item" href="/auth/logout" id="menu-logout">
+          <span class="icon icon--md icon-logout" aria-hidden="true"></span>
+          <span>Logout</span>
+        </a>
+
+        <div class="main-menu__heading">Help</div>
+
+        <a class="main-menu__item" href="https://docs.novelai.net/image"
+           target="_blank" rel="noreferrer noopener">
+          <span class="icon icon--md icon-text" aria-hidden="true"></span>
+          <span>Tutorial</span>
+        </a>
+        <a class="main-menu__item" href="https://docs.novelai.net"
+           target="_blank" rel="noreferrer noopener">
+          <span class="icon icon--md icon-help" aria-hidden="true"></span>
+          <span>Documentation</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="panel-mover" id="panel-mover">
+
+    <button class="tray-handle" type="button" id="tray-handle"
+            aria-label="Open settings" aria-expanded="false"
+            aria-controls="settings-panel">
+      <span class="icon icon-arrow-up" id="tray-handle-icon" aria-hidden="true"></span>
+    </button>
+
+    <div class="panel-scroll">
+
+    <div class="model-section">
+
+    <div class="model-card" id="model" role="combobox" tabindex="0"
+         aria-haspopup="listbox" aria-expanded="false" aria-controls="model-listbox"
+         aria-label="Model">
+      <span class="model-card__title" id="model-title">NAI Diffusion V5 Full</span>
+      <span class="model-card__desc" id="model-desc">The newest and best model.</span>
+      <span class="model-card__indicator" aria-hidden="true">
+        <span class="model-card__rule"></span>
+        <span class="icon icon--md icon-chevron-down"></span>
+      </span>
+    </div>
+    <ul class="listbox listbox--model" id="model-listbox" role="listbox"
+        aria-label="Model" hidden></ul>
+    </div>
+
+    <section class="prompt-block">
+      <div class="prompt-tabs" role="tablist">
+        <button class="dataset-toggle" type="button" id="dataset-toggle"
+                aria-pressed="false" aria-label="Switch to furry mode"
+                title="Anime mode">
+          <span class="icon icon--sm" aria-hidden="true"></span>
+        </button>
+        <button class="prompt-tab" type="button" role="tab" aria-selected="true"
+                data-target="prompt">Prompt</button>
+        <span class="prompt-tab-group" data-target="undesired">
+          <button class="prompt-tab" type="button" role="tab" aria-selected="false"
+                  data-target="undesired">Undesired Content</button>
+          <button class="prompt-detach" type="button" id="prompt-detach"
+                  aria-pressed="false" aria-label="Show both prompt boxes"
+                  title="Show both prompt boxes">
+            <span class="icon icon--sm" aria-hidden="true"></span>
+          </button>
+        </span>
+        <button class="prompt-tabs__tool" type="button" id="randomize"
+                aria-label="Randomize prompt" title="Randomize">
+          <span class="icon icon--sm icon-dice" aria-hidden="true"></span>
+        </button>
+        <button class="prompt-settings-trigger" type="button" id="prompt-settings-trigger"
+                aria-label="Prompt settings" aria-expanded="false">
+          <span class="icon icon--sm icon-settings" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <div class="prompt-settings" id="prompt-settings" hidden>
+        <div class="prompt-settings__tabs" role="tablist">
+          <button class="prompt-settings__tab" type="button" role="tab"
+                  id="tab-settings" aria-controls="panel-settings"
+                  data-tab="settings" aria-selected="true">Settings</button>
+          <button class="prompt-settings__tab" type="button" role="tab"
+                  id="tab-chunks" aria-controls="panel-chunks"
+                  data-tab="chunks" aria-selected="false">Prompt Chunks</button>
+        </div>
+
+        <div class="prompt-settings__body" id="panel-settings" role="tabpanel"
+             aria-labelledby="tab-settings">
+
+          <label class="setting">
+            <span class="setting__row">
+              <span class="setting__label">Add Quality Tags</span>
+              <span class="toggle">
+                <input type="checkbox" id="add-quality-tags" checked
+                       aria-label="Add Quality Tags">
+                <span class="toggle__track"></span>
+              </span>
+            </span>
+            <span class="setting__descs">
+              <span class="setting__desc" data-when="on">Tags to increase quality will be prepended to the prompt.</span>
+              <span class="setting__desc" data-when="off" data-hidden="true"
+                    aria-hidden="true">The prompt will be used unmodified.</span>
+            </span>
+          </label>
+
+          <div class="setting-group">
+            <div class="setting__label" id="uc-preset-label">Undesired Content Preset</div>
+
+            <div class="select-field">
+              <div class="select-control select-control--button" id="uc-preset"
+                   role="combobox" tabindex="0" aria-haspopup="listbox"
+                   aria-expanded="false" aria-controls="uc-preset-listbox"
+                   aria-labelledby="uc-preset-label" data-value="heavy">
+                <span class="select-control__label" id="uc-preset-label-value">Heavy</span>
+              </div>
+              <ul class="listbox listbox--uc-preset" id="uc-preset-listbox"
+                  role="listbox" aria-label="Undesired Content Preset" hidden></ul>
+            </div>
+          </div>
+
+          <label class="setting">
+            <span class="setting__row">
+              <span class="setting__label">Disable Tag Suggestions</span>
+              <span class="toggle">
+                <input type="checkbox" id="disable-tag-suggestions"
+                       aria-label="Disable Tag Suggestions">
+                <span class="toggle__track"></span>
+              </span>
+            </span>
+          </label>
+
+          <label class="setting">
+            <span class="setting__row">
+              <span class="setting__label">Highlight Emphasis</span>
+              <span class="toggle">
+                <input type="checkbox" id="highlight-emphasis" checked
+                       aria-label="Highlight Emphasis">
+                <span class="toggle__track"></span>
+              </span>
+            </span>
+          </label>
+        </div>
+
+        <div class="prompt-settings__body" id="panel-chunks" role="tabpanel"
+             aria-labelledby="tab-chunks" hidden>
+
+          <div class="chunks__list-view" id="chunks-list-view">
+            <div class="chunks__header">
+              <span class="chunks__heading">Prompt Chunks</span>
+              <div class="chunks__actions">
+                <button class="chunks__btn chunks__btn--wide" type="button"
+                        id="chunks-new-category" aria-label="New category"
+                        title="New Category">
+                  <span class="icon icon--chunk icon-folder-plus" aria-hidden="true"></span>
+                </button>
+                <button class="chunks__btn" type="button" id="chunks-new-chunk"
+                        aria-label="Add prompt chunk" title="New Prompt Chunk">
+                  <span class="icon icon--chunk icon-plus" aria-hidden="true"></span>
+                </button>
+                <button class="chunks__btn" type="button" id="chunks-close"
+                        aria-label="Close">
+                  <span class="icon icon--chunk icon-cross" aria-hidden="true"></span>
+                </button>
+              </div>
+            </div>
+            <div class="chunks__list" id="chunks-list"></div>
+            <div class="chunks__spacer" aria-hidden="true"></div>
+            <button class="chunks__delete-all" type="button"
+                    id="chunks-delete-all">Delete All</button>
+          </div>
+
+          <form class="chunks__form" id="chunks-form" hidden>
+            <div class="chunks__form-header">
+              <span class="chunks__form-title" id="chunks-form-title">New Prompt Chunk</span>
+              <button class="chunks__btn" type="button" id="chunks-form-close"
+                      aria-label="Close">
+                <span class="icon icon--chunk icon-cross" aria-hidden="true"></span>
+              </button>
+            </div>
+
+            <div class="chunks__field">
+              <label class="chunks__label" for="chunk-name">Name</label>
+              <input class="chunks__input" type="text" id="chunk-name"
+                     placeholder="e.g., My Style Tags" autocomplete="off">
+            </div>
+
+            <div class="chunks__field" data-chunk-only>
+              <label class="chunks__label" for="chunk-content">Content</label>
+              <textarea class="chunks__textarea" id="chunk-content"
+                        placeholder="Enter the tags/content this chunk will expand to..."></textarea>
+            </div>
+
+            <div class="chunks__field" data-chunk-only>
+              <label class="chunks__label" for="chunk-category">Category</label>
+              <select class="chunks__select" id="chunk-category"></select>
+            </div>
+
+            <div class="chunks__field">
+              <span class="chunks__label" id="chunk-color-label">Color</span>
+              <div class="chunks__picker">
+                <div class="chunks__picker-body">
+                  <div class="chunks__saturation" id="chunk-saturation"
+                       role="slider" tabindex="0" aria-label="Color"
+                       aria-labelledby="chunk-color-label">
+                    <div class="chunks__pointer" id="chunk-saturation-pointer"></div>
+                  </div>
+                  <div class="chunks__hue" id="chunk-hue" role="slider" tabindex="0"
+                       aria-label="Hue" aria-valuemin="0" aria-valuemax="360"
+                       aria-valuenow="220">
+                    <div class="chunks__pointer" id="chunk-hue-pointer"></div>
+                  </div>
+                </div>
+                <div class="chunks__hex-row">
+                  <div class="chunks__swatch" id="chunk-swatch"></div>
+                  <input class="chunks__input chunks__hex" type="text" id="chunk-color"
+                         spellcheck="false" autocomplete="off" value="#6B7280"
+                         aria-label="Color hex value">
+                </div>
+              </div>
+            </div>
+
+            <div class="chunks__form-actions">
+              <button class="chunks__form-btn chunks__form-btn--delete" type="button"
+                      id="chunks-form-delete" hidden>Delete</button>
+              <button class="chunks__form-btn" type="button"
+                      id="chunks-form-cancel">Cancel</button>
+              <button class="chunks__form-btn chunks__form-btn--save" type="submit"
+                      id="chunks-form-save">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="prompt-random" hidden>
+        <span class="prompt-random__label">Random Prompt</span>
+        <div class="prompt-random__tools">
+          <button class="prompt-random__tool" type="button" id="random-clear"
+                  aria-label="Delete random prompt" title="Delete random prompt">
+            <span class="icon icon--xs icon-mid-cross" aria-hidden="true"></span>
+          </button>
+          <button class="prompt-random__tool" type="button" id="random-reroll"
+                  aria-label="Reroll random prompt" title="Reroll random prompt">
+            <span class="icon icon--sm icon-reload" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="prompt-field" data-for="prompt">
+        <div class="prompt-mirror" aria-hidden="true"></div>
+        <textarea class="prompt-input" id="prompt"
+                  placeholder="Describe your image…"
+                  role="combobox" aria-autocomplete="list" aria-expanded="false"
+                  aria-controls="tag-suggest-prompt-list"></textarea>
+        <div class="tag-suggest" id="tag-suggest-prompt" hidden>
+          <div class="tag-suggest__head">
+            <span class="tag-suggest__title">Did you mean?</span>
+            <button class="tag-suggest__close" type="button" aria-label="Close">
+              <span class="icon icon--sm icon-cross" aria-hidden="true"></span>
+            </button>
+          </div>
+          <div class="tag-suggest__loading" hidden>
+            <div class="tag-suggest__spinner" role="status" aria-label="Loading suggestions">
+              <span></span><span></span>
+            </div>
+          </div>
+          <div class="tag-suggest__list" id="tag-suggest-prompt-list"
+               role="listbox" aria-label="Tag suggestions"></div>
+        </div>
+      </div>
+      <div class="prompt-subhead">
+        <span class="prompt-subhead__label">Undesired Content</span>
+      </div>
+      <div class="prompt-field" data-for="undesired" hidden>
+        <div class="prompt-mirror" aria-hidden="true"></div>
+        <textarea class="prompt-input" id="undesired"
+                  placeholder="What to avoid…"
+                  role="combobox" aria-autocomplete="list" aria-expanded="false"
+                  aria-controls="tag-suggest-undesired-list"></textarea>
+        <div class="tag-suggest" id="tag-suggest-undesired" hidden>
+          <div class="tag-suggest__head">
+            <span class="tag-suggest__title">Did you mean?</span>
+            <button class="tag-suggest__close" type="button" aria-label="Close">
+              <span class="icon icon--sm icon-cross" aria-hidden="true"></span>
+            </button>
+          </div>
+          <div class="tag-suggest__loading" hidden>
+            <div class="tag-suggest__spinner" role="status" aria-label="Loading suggestions">
+              <span></span><span></span>
+            </div>
+          </div>
+          <div class="tag-suggest__list" id="tag-suggest-undesired-list"
+               role="listbox" aria-label="Tag suggestions"></div>
+        </div>
+      </div>
+      <div class="prompt-meter">
+        <div class="prompt-length" aria-hidden="true">
+          <div class="prompt-length__fill" id="prompt-length"></div>
+        </div>
+        <div class="prompt-meter__status">
+          <span id="quality-tags-status">Quality Tags Enabled</span>
+          <span class="icon icon--xs icon-help" aria-hidden="true"></span>
+          <button class="transparent-bg" type="button" id="transparent-bg"
+                  aria-pressed="false"
+                  title="Prepend &quot;transparent background, has alpha&quot;">
+            <span class="icon icon--xs icon-layers" aria-hidden="true"></span>
+            <span>Transparent BG</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div class="base-img" id="base-img-empty">
+      <span class="base-img__label">Add a Base Img (Optional)</span>
+      <div class="button-group">
+        <button class="button-group__button" type="button" id="base-img"
+                aria-label="Add a base image">
+          <span class="icon icon--sm icon-import" aria-hidden="true"></span>
+        </button>
+        <div class="button-group__rule" aria-hidden="true"></div>
+        <button class="button-group__button" type="button" id="base-img-draw"
+                aria-label="Draw an image">
+          <span class="icon icon--sm icon-pen" aria-hidden="true"></span>
+        </button>
+      </div>
+      <input type="file" id="base-img-file" accept="image/*" hidden>
+    </div>
+
+    <div class="image2image" id="base-img-loaded" hidden>
+      <div class="image2image__inner" id="image2image-state">
+        <div class="image2image__head">
+          <span class="image2image__text">
+            <span class="image2image__title">Image2Image</span>
+            <span class="image2image__desc">Transform your image.</span>
+          </span>
+          <div class="image2image__actions">
+            <div class="button-group">
+              <button class="button-group__button" type="button" id="image2image-draw"
+                      aria-label="Draw on this image">
+                <span class="icon icon--sm icon-pen" aria-hidden="true"></span>
+              </button>
+              <div class="button-group__rule" aria-hidden="true"></div>
+              <button class="button-group__button" type="button" id="image2image-clear"
+                      aria-label="Remove the base image">
+                <span class="icon icon--sm icon-trash" aria-hidden="true"></span>
+              </button>
+            </div>
+            <button class="image2image__fold" type="button" id="image2image-fold"
+                    aria-expanded="true" aria-controls="image2image-body"
+                    aria-label="Collapse Image2Image">
+              <span class="icon icon--sm icon-fold" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="image2image__body" id="image2image-body">
+          <div class="slider-field">
+            <div class="slider-field__row">
+              <label class="slider-field__label" for="img2img-strength">Strength:</label>
+              <input class="slider-field__number" id="img2img-strength" type="number"
+                     value="0.7" min="0" max="1" step="0.01">
+            </div>
+            <input class="slider-field__range" id="img2img-strength-range" type="range"
+                   value="0.7" min="0" max="1" step="0.01" aria-label="Strength">
+          </div>
+          <div class="slider-field">
+            <div class="slider-field__row">
+              <label class="slider-field__label" for="img2img-noise">Noise:</label>
+              <input class="slider-field__number" id="img2img-noise" type="number"
+                     value="0" min="0" max="1" step="0.01">
+            </div>
+            <input class="slider-field__range" id="img2img-noise-range" type="range"
+                   value="0" min="0" max="1" step="0.01" aria-label="Noise">
+          </div>
+          <div class="image2image__footer">
+            <div class="button-group">
+              <button class="button-group__button button-group__button--labelled"
+                      type="button" id="image2image-inpaint">
+                <span class="icon icon--sm icon-inpaint" aria-hidden="true"></span>
+                <span>Inpaint Image</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="image2image__inner mask-state" id="mask-state" hidden>
+        <div class="image2image__head">
+          <button class="mask-state__back" type="button" id="mask-back"
+                  aria-label="Back to Image2Image">
+            <span class="icon icon--sm icon-arrow-right" aria-hidden="true"></span>
+          </button>
+          <span class="image2image__text">
+            <span class="image2image__title">Inpaint</span>
+            <span class="image2image__desc">Change part of an image.</span>
+          </span>
+          <div class="image2image__actions">
+            <div class="button-group">
+              <button class="button-group__button" type="button" id="mask-edit"
+                      aria-label="Edit this mask">
+                <span class="icon icon--sm icon-pen" aria-hidden="true"></span>
+              </button>
+              <div class="button-group__rule" aria-hidden="true"></div>
+              <button class="button-group__button" type="button" id="mask-clear"
+                      aria-label="Remove the base image">
+                <span class="icon icon--sm icon-trash" aria-hidden="true"></span>
+              </button>
+            </div>
+            <button class="image2image__fold" type="button" id="mask-fold"
+                    aria-expanded="true" aria-controls="mask-body"
+                    aria-label="Collapse Inpaint">
+              <span class="icon icon--sm icon-fold" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="mask-state__body" id="mask-body">
+          <div class="mask-box">
+            <div class="mask-box__head">
+              <span class="mask-box__title">Mask</span>
+            </div>
+
+            <img class="mask-state__preview" id="mask-preview" alt="Committed mask">
+          </div>
+          <div class="slider-field">
+            <div class="slider-field__row">
+              <label class="slider-field__label" for="inpaint-strength">Strength</label>
+              <input class="slider-field__number" id="inpaint-strength" type="number"
+                     value="1" min="0.01" max="1" step="0.01">
+            </div>
+            <input class="slider-field__range" id="inpaint-strength-range" type="range"
+                   value="1" min="0.01" max="1" step="0.01" aria-label="Inpaint strength">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="character-prompts">
+      <span class="character-prompts__heading">
+        <span class="character-prompts__title">Character Prompts</span><br>
+        <span class="character-prompts__sub">Customize separate characters.</span>
+      </span>
+      <button class="add-character" type="button" id="add-character"
+              aria-haspopup="menu" aria-expanded="false">
+        <span class="icon icon--xs icon-plus" aria-hidden="true"></span>Add Character
+      </button>
+    </div>
+
+    <div class="character-list" id="character-list"></div>
+
+    <div class="gender-flyout" id="gender-flyout" role="menu" hidden>
+      <button class="gender-flyout__option" type="button" role="menuitem" data-gender="female">
+        <span class="icon icon--sm icon-female" aria-hidden="true"></span>Female
+      </button>
+      <button class="gender-flyout__option" type="button" role="menuitem" data-gender="male">
+        <span class="icon icon--sm icon-male" aria-hidden="true"></span>Male
+      </button>
+      <button class="gender-flyout__option" type="button" role="menuitem" data-gender="other">
+        <span class="icon icon--sm icon-other" aria-hidden="true"></span>Other
+      </button>
+    </div>
+
+    <div class="position-global" id="position-global" hidden>
+      <span class="position-global__label">Character Positions (Global)</span>
+      <label class="position-global__pill">
+        <input type="checkbox" id="position-global-toggle" checked
+               aria-label="AI&rsquo;s Choice">
+        <span class="icon icon--xs" aria-hidden="true"
+              data-role="global-icon"></span>AI&rsquo;s Choice
+      </label>
+    </div>
+
+    <template id="character-card-template">
+      <div class="character-card" data-focused="true">
+        <div class="character-card__head">
+          <span class="character-card__name">
+            <span class="icon" aria-hidden="true" data-role="gender-icon"></span>
+            <span data-role="name"></span>
+          </span>
+          <div class="character-card__actions">
+            <button class="character-card__action" type="button" data-action="up"
+                    aria-label="Move character up">
+              <span><span class="icon icon--xs icon-arrow-up" aria-hidden="true"></span></span>
+            </button>
+            <button class="character-card__action" type="button" data-action="down"
+                    aria-label="Move character down">
+              <span><span class="icon icon--xs icon-arrow-down" aria-hidden="true"></span></span>
+            </button>
+
+            <button class="character-card__action" type="button" data-action="toggle"
+                    aria-pressed="true" aria-label="Disable character">
+              <span><span class="icon icon--xs" aria-hidden="true"
+                          data-role="toggle-icon"></span></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="character-card__body">
+          <div class="character-card__summary" data-role="summary">
+            <div class="character-card__excerpt" data-role="excerpt"
+                 data-placeholder="No prompt yet"></div>
+            <div class="character-card__meta">
+              <div class="character-card__chips">
+                <span class="character-chip">Position<span class="character-chip__value"
+                      data-role="summary-position">AI&rsquo;s Choice</span></span>
+                <span class="character-chip">Tokens<span class="character-chip__value"
+                      data-role="summary-tokens">0</span></span>
+              </div>
+              <button class="character-card__action" type="button" data-action="delete"
+                      aria-label="Delete character">
+                <span><span class="icon icon--xs icon-trash" aria-hidden="true"></span></span>
+              </button>
+            </div>
+          </div>
+
+          <div class="character-card__editor" data-role="editor">
+            <div class="character-card__tabs">
+              <div class="character-card__tablist" role="tablist">
+                <button class="character-tab" type="button" role="tab"
+                        data-tab="prompt" aria-selected="true">Prompt</button>
+                <button class="character-tab" type="button" role="tab"
+                        data-tab="uc" aria-selected="false">Undesired Content</button>
+              </div>
+              <button class="character-card__action" type="button" data-action="delete"
+                      aria-label="Delete character">
+                <span class="icon icon--sm icon-trash" aria-hidden="true"></span>
+              </button>
+            </div>
+            <div class="character-card__well">
+              <div class="character-card__mirror" data-role="mirror" aria-hidden="true"></div>
+              <textarea class="character-card__input" data-role="input"
+                        spellcheck="false"
+                        role="combobox" aria-autocomplete="list"
+                        aria-expanded="false"></textarea>
+              <div class="tag-suggest" data-role="suggest" hidden>
+                <div class="tag-suggest__head">
+                  <span class="tag-suggest__title">Did you mean?</span>
+                  <button class="tag-suggest__close" type="button" aria-label="Close">
+                    <span class="icon icon--sm icon-cross" aria-hidden="true"></span>
+                  </button>
+                </div>
+                <div class="tag-suggest__loading" hidden>
+                  <div class="tag-suggest__spinner" role="status"
+                       aria-label="Loading suggestions">
+                    <span></span><span></span>
+                  </div>
+                </div>
+                <div class="tag-suggest__list" role="listbox"
+                     aria-label="Tag suggestions"></div>
+              </div>
+            </div>
+            <div class="character-card__tokens">
+              <div class="character-card__token-track">
+                <div class="character-card__token-fill" data-role="token-fill"></div>
+                <div class="character-card__token-head"></div>
+              </div>
+            </div>
+
+            <div class="character-card__position">
+              <span class="character-card__position-label">Position</span>
+              <button class="position-trigger" type="button" data-action="position">
+                <span data-role="position-label">AI&rsquo;s Choice</span>
+                <span class="position-trigger__cell" data-role="position-cell"></span>
+              </button>
+            </div>
+          </div>
+
+          <div class="character-card__picker" data-role="picker">
+            <div class="position-frame">
+              <div class="position-grid" data-role="position-grid" role="group"
+                   aria-label="Character position"></div>
+            </div>
+            <div class="character-card__picker-foot">
+              <button class="position-done" type="button" data-action="position-done">
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <div class="vibe-box" id="vibe-box">
+    <div class="feature-card feature-card--boxed" id="vibe-card">
+      <span class="icon icon-vibe-transfer feature-card__glyph" aria-hidden="true"></span>
+      <span class="feature-card__text">
+        <span class="feature-card__title">Vibe Transfer<span class="feature-card__count" id="vibe-count-wrap"
+                   hidden>(<span id="vibe-count">0</span>)</span></span><br>
+        <span class="feature-card__desc">Change the image, keep the vision.</span>
+      </span>
+
+      <div class="feature-card__actions" id="vibe-actions">
+        <button class="icon-button" type="button" id="vibe-transfer"
+                aria-label="Add a vibe reference"
+                title="Add an image or a vibe bundle">
+          <span class="icon icon--sm icon-import" id="vibe-add-icon"
+                aria-hidden="true"></span>
+        </button>
+
+        <button class="icon-button icon-button--narrow" type="button" id="vibe-menu"
+                aria-label="Vibe Transfer options" aria-haspopup="menu"
+                aria-expanded="false" hidden>
+          <span class="icon icon--sm icon-dotdotdot" aria-hidden="true"></span>
+        </button>
+
+        <div class="vibe-flyout" id="vibe-flyout" role="menu"
+             aria-labelledby="vibe-menu" hidden>
+          <div class="vibe-flyout__actions">
+            <button class="vibe-flyout__option" type="button" role="menuitem"
+                    data-vibe-action="export-bundle">
+              <span class="icon vibe-flyout__icon icon-export" aria-hidden="true"></span>
+              <span>Export Bundle</span>
+            </button>
+            <button class="vibe-flyout__option" type="button" role="menuitem"
+                    data-vibe-action="embed">
+              <span class="icon vibe-flyout__icon icon-embed-image" aria-hidden="true"></span>
+              <span>Embed Into Image</span>
+            </button>
+          </div>
+          <button class="vibe-flyout__option vibe-flyout__option--toggle" type="button"
+                  role="menuitemcheckbox" aria-checked="false"
+                  data-vibe-action="export-as-encoding">
+            <span class="vibe-flyout__tick" aria-hidden="true"></span>
+            <span>Export as Encodings</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <label class="vibe-normalize" id="vibe-normalize-row" hidden>
+      <input type="checkbox" id="vibe-normalize" class="checkbox__input" checked>
+      <span class="checkbox__box" aria-hidden="true"></span>
+      <span class="vibe-normalize__label">Normalize Reference Strength Values</span>
+    </label>
+
+    <div class="vibe-slots" id="vibe-slots"></div>
+    </div>
+
+    <div class="vibe-notice" id="vibe-notice" hidden>Vibe Transfer is not currently
+      supported for inpainting.</div>
+    <input type="file" id="vibe-file" multiple
+           accept="image/*,.naiv4vibebundle,.naiv4vibe,application/json,.json" hidden>
+
+    <template id="vibe-slot-template">
+      <div class="vibe-slot" data-role="vibe-slot">
+        <div class="vibe-slot__head">
+          <div class="vibe-slot__head-left">
+            <div class="icon-button-frame">
+              <button class="icon-button-frame__button" type="button"
+                      data-action="vibe-remove" aria-label="Remove this vibe">
+                <span class="icon icon-trash" aria-hidden="true"
+                      style="width:14px;height:14px"></span>
+              </button>
+            </div>
+            <div class="vibe-slot__name-wrap">
+              <input class="vibe-slot__name" type="text" data-role="vibe-name"
+                     aria-label="Vibe name">
+            </div>
+          </div>
+          <div class="vibe-slot__head-right">
+            <div class="icon-button-frame">
+              <button class="icon-button-frame__button vibe-slot__anlas" type="button"
+                      data-action="vibe-encode">
+                <span data-role="vibe-anlas-count">2</span>
+                <span class="icon icon-anla" aria-hidden="true"
+                      style="width:10px;height:10px"></span>
+                <span class="visually-hidden">Anlas</span>
+              </button>
+            </div>
+            <div class="icon-button-frame">
+              <button class="icon-button-frame__button icon-button-frame__button--filled"
+                      type="button" data-action="vibe-toggle"
+                      aria-label="Use this vibe" aria-pressed="true">
+                <span class="icon icon-check" aria-hidden="true"
+                      style="width:12px;height:12px"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="vibe-slot__body">
+          <div class="vibe-slot__thumb-cell">
+            <div class="vibe-slot__thumb" data-role="vibe-thumb"></div>
+          </div>
+          <div class="vibe-slot__sliders">
+            <div class="slider-field">
+              <div class="slider-field__row">
+                <span class="slider-field__label">Reference Strength</span>
+                <input class="slider-field__number" type="number"
+                       data-role="vibe-strength-number"
+                       value="0.6" min="0.01" max="1" step="0.01"
+                       aria-label="Reference Strength">
+              </div>
+              <input class="slider-field__range" type="range"
+                     data-role="vibe-strength-range"
+                     value="0.6" min="0.01" max="1" step="0.01"
+                     aria-label="Reference Strength">
+            </div>
+            <div class="vibe-slot__slider-gap">
+              <div class="slider-field">
+                <div class="slider-field__row">
+                  <span class="slider-field__label">Information Extracted</span>
+                  <input class="slider-field__number" type="number"
+                         data-role="vibe-info-number"
+                         value="0.7" min="0.01" max="1" step="0.01"
+                         aria-label="Information Extracted">
+                </div>
+                <input class="slider-field__range" type="range"
+                       data-role="vibe-info-range"
+                       value="0.7" min="0.01" max="1" step="0.01"
+                       aria-label="Information Extracted">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vibe-slot__footer" data-role="vibe-footer">
+
+          <span data-role="vibe-footer-owed">
+            <span class="vibe-slot__footer-muted">Encoding required. This will cost </span>
+            <span>2&nbsp;<span class="icon icon-anla" aria-hidden="true"
+                              style="width:10px;height:10px;display:inline-block"></span></span>
+            <span class="vibe-slot__footer-muted"> on the next generation.</span>
+          </span>
+          <span class="vibe-slot__footer-blocked" data-role="vibe-footer-blocked" hidden>
+            Out of Anlas this month. This vibe won't be included until more come back.
+          </span>
+          <a href="https://docs.novelai.net/en/image/vibetransfer"
+             target="_blank" rel="noreferrer"> Learn more here.</a>
+        </div>
+      </div>
+    </template>
+
+    <div class="precise-box" id="precise-box">
+      <div class="feature-card feature-card--boxed precise-card" id="precise-card">
+        <span class="icon icon-precise-reference feature-card__glyph" aria-hidden="true"></span>
+        <span class="feature-card__text">
+          <span class="feature-card__title">Precise Reference</span><br>
+          <span class="feature-card__desc">Add a reference image for a character or style.</span>
+        </span>
+        <div class="feature-card__actions">
+          <button class="icon-button" type="button" id="precise-add"
+                  aria-label="Add a precise reference"
+                  title="Add a reference image">
+            <span class="icon icon--sm icon-import" id="precise-add-icon"
+                  aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+      <div class="precise-slots" id="precise-slots"></div>
+    </div>
+    <input type="file" id="precise-file" accept="image/*" hidden>
+
+    <template id="precise-slot-template">
+      <div class="precise-slot" data-role="precise-slot">
+        <div class="precise-slot__left">
+          <div class="precise-slot__buttons">
+            <div class="icon-button-frame">
+              <button class="icon-button-frame__button precise-slot__trash" type="button"
+                      data-action="precise-remove" aria-label="Remove this reference">
+                <span class="icon icon-trash" aria-hidden="true"
+                      style="width:12px;height:12px"></span>
+              </button>
+            </div>
+
+            <div class="icon-button-frame precise-slot__enabled-frame">
+              <span class="icon-button-frame__button precise-slot__enabled"
+                    data-role="precise-status">
+                <span>Enabled</span>
+                <span class="icon icon-check" aria-hidden="true"
+                      style="width:12px;height:12px"></span>
+              </span>
+            </div>
+          </div>
+          <div class="precise-slot__thumb" data-role="precise-thumb"></div>
+        </div>
+
+        <div class="precise-slot__body">
+
+          <div class="select-field">
+            <div class="select-control select-control--button precise-slot__mode"
+                 data-role="precise-mode" role="combobox" tabindex="0"
+                 aria-haspopup="listbox" aria-expanded="false"
+                 aria-label="Reference mode">
+
+              <span class="icon icon-precise-style-character precise-slot__mode-icon"
+                    aria-hidden="true"></span>
+              <span class="select-control__label">Character &amp; Style</span>
+            </div>
+            <div class="listbox" data-role="precise-mode-listbox" role="listbox"
+                 aria-label="Reference mode" hidden></div>
+          </div>
+
+          <div class="slider-field precise-slot__slider">
+            <div class="slider-field__row">
+              <span class="slider-field__label">Strength:</span>
+              <input class="slider-field__number" type="number"
+                     data-role="precise-strength-number"
+                     value="1" min="0" max="1" step="0.05"
+                     aria-label="Strength">
+            </div>
+            <input class="slider-field__range" type="range"
+                   data-role="precise-strength-range"
+                   value="1" min="0" max="1" step="0.05"
+                   aria-label="Strength">
+          </div>
+          <div class="slider-field precise-slot__slider">
+            <div class="slider-field__row">
+              <span class="slider-field__label">Fidelity:</span>
+              <input class="slider-field__number" type="number"
+                     data-role="precise-fidelity-number"
+                     value="1" min="0" max="1" step="0.05"
+                     aria-label="Fidelity">
+            </div>
+            <input class="slider-field__range" type="range"
+                   data-role="precise-fidelity-range"
+                   value="1" min="0" max="1" step="0.05"
+                   aria-label="Fidelity">
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <h2 class="section-heading">Image Settings</h2>
+    <div class="settings-row settings-row--panel">
+      <div class="select-field">
+        <div class="select-control select-control--button" id="resolution"
+             role="combobox" tabindex="0" aria-haspopup="listbox"
+             aria-expanded="false" aria-controls="resolution-listbox"
+             aria-label="Resolution preset" data-value="832x1216">
+          <span class="select-control__label" id="resolution-label">Portrait</span>
+        </div>
+        <ul class="listbox listbox--resolution" id="resolution-listbox"
+            role="listbox" aria-label="Resolution preset" hidden></ul>
+      </div>
+      <div class="dimension-box">
+        <input class="dimension-box__input" id="width" type="number" value="832"
+               min="512" max="6144" step="64" aria-label="Width">
+        <button class="dimension-box__swap" type="button" id="swap-dimensions"
+                aria-label="Swap width and height">
+          <span class="icon icon-cross" aria-hidden="true"></span>
+        </button>
+        <input class="dimension-box__input" id="height" type="number" value="1216"
+               min="512" max="6144" step="64" aria-label="Height">
+      </div>
+    </div>
+
+    <div class="settings-row settings-row--panel settings-row--spaced">
+      <div class="image-count" id="image-count">
+        <div class="image-count__icon">
+          <span class="icon icon--sm icon-image-count" aria-hidden="true"></span>
+        </div>
+        <div class="image-count__buttons" id="image-count-buttons"
+             role="radiogroup" aria-label="Number of images"></div>
+      </div>
+    </div>
+
+    </div>
+    </div>
+    <div class="panel-footer">
+
+    <button class="footer-icon-button" type="button" id="mobile-settings-toggle"
+            aria-label="Image and AI settings" aria-expanded="false"
+            aria-controls="mobile-settings">
+      <span class="icon icon--sm icon-settings" aria-hidden="true"></span>
+    </button>
+
+    <section class="ai-settings">
+      <button class="ai-settings__head" type="button" id="ai-settings-toggle"
+              aria-label="Expand AI settings" aria-expanded="false"
+              aria-controls="ai-settings-body">
+        <span class="ai-glance">
+          <span class="ai-glance__item">
+            <span class="ai-glance__label">Steps</span>
+            <span class="ai-glance__value" id="glance-steps">28</span>
+          </span>
+          <span class="ai-glance__item">
+            <span class="ai-glance__label">Guidance</span>
+            <span class="ai-glance__value" id="glance-guidance">5.8</span>
+          </span>
+          <span class="ai-glance__item">
+            <span class="ai-glance__label">Seed</span>
+            <span class="ai-glance__value" id="glance-seed">N/A</span>
+          </span>
+          <span class="ai-glance__item">
+            <span class="ai-glance__label">Sampler</span>
+            <span class="ai-glance__value" id="glance-sampler">Euler Ancestral</span>
+          </span>
+        </span>
+        <span class="icon icon--sm icon-arrow-up" aria-hidden="true"></span>
+      </button>
+
+      <div class="ai-settings__body" id="ai-settings-body" hidden>
+
+        <div class="ai-settings__bar">
+          <span class="section-heading section-heading--inline">AI Settings</span>
+          <button class="icon-button icon-button--bare" type="button" id="ai-settings-close"
+                  aria-label="Collapse AI settings" aria-controls="ai-settings-body">
+            <span class="icon icon--sm icon-arrow-up icon--flipped" aria-hidden="true"></span>
+          </button>
+        </div>
+
+      <div class="slider-field">
+        <div class="slider-field__row">
+          <label class="slider-field__label" for="steps">Steps:</label>
+          <input class="slider-field__number" id="steps" type="number"
+                 value="28" min="1" max="50" step="1">
+        </div>
+        <input class="slider-field__range" id="steps-range" type="range"
+               value="28" min="1" max="50" step="1" aria-label="Steps">
+      </div>
+
+      <div class="slider-field">
+        <div class="slider-field__row">
+          <label class="slider-field__label" for="guidance">Prompt Guidance:</label>
+          <input class="slider-field__number" id="guidance" type="number"
+                 value="5.8" min="0" max="10" step="0.1">
+        </div>
+        <input class="slider-field__range" id="guidance-range" type="range"
+               value="5.8" min="0" max="10" step="0.1" aria-label="Prompt Guidance">
+      </div>
+
+      <div class="settings-row">
+
+        <div class="field field--seed">
+          <div class="field__head">
+            <label class="field__label" for="seed">Seed</label>
+            <button class="field__clear" type="button" id="seed-clear" hidden>Clear</button>
+          </div>
+
+          <input class="text-control" id="seed" type="text" inputmode="numeric"
+                 autocomplete="off" placeholder="Enter a seed" value="">
+        </div>
+        <label class="field field--grow">
+          <span class="field__label">Sampler</span>
+          <select class="select-control" id="sampler">
+            <option value="k_euler_ancestral" selected>Euler Ancestral</option>
+            <option value="k_euler">Euler</option>
+            <option value="k_dpmpp_2s_ancestral">DPM++ 2S Ancestral</option>
+            <option value="k_dpmpp_2m_sde">DPM++ 2M SDE</option>
+            <option value="k_dpmpp_sde">DPM++ SDE</option>
+            <option value="k_dpmpp_2m">DPM++ 2M</option>
+          </select>
+        </label>
+        </div>
+
+        <button class="advanced-toggle" type="button" id="advanced-toggle"
+                aria-expanded="false" aria-controls="advanced-body">
+          Advanced Settings
+          <span class="icon icon--xs icon-arrow-up" aria-hidden="true"></span>
+        </button>
+
+        <div class="advanced-body" id="advanced-body" hidden>
+          <div class="slider-field">
+            <div class="slider-field__row">
+              <label class="slider-field__label" for="cfg-rescale">Prompt Guidance Rescale:</label>
+              <input class="slider-field__number" id="cfg-rescale" type="number"
+                     value="0" min="0" max="1" step="0.02">
+            </div>
+            <input class="slider-field__range" id="cfg-rescale-range" type="range"
+                   value="0" min="0" max="1" step="0.02" aria-label="Prompt Guidance Rescale">
+          </div>
+
+          <label class="field">
+            <span class="section-heading section-heading--inline">Noise Schedule</span>
+            <select class="select-control" id="noise-schedule">
+              <option value="karras" selected>karras</option>
+              <option value="native">native</option>
+              <option value="exponential">exponential</option>
+              <option value="polyexponential">polyexponential</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <div class="opus-meter" id="opus-bar" hidden>
+      <div class="opus-meter__row">
+        <span class="opus-meter__label" id="opus-bar-label"></span>
+        <button class="opus-meter__info" type="button" id="opus-bar-info">More Info</button>
+      </div>
+      <div class="opus-meter__track">
+        <div class="opus-meter__fill" id="opus-bar-fill"></div>
+      </div>
+    </div>
+
+    <div class="generate-notice" id="base-size-notice" role="status" hidden>
+      <span class="generate-notice__text" id="base-size-notice-text"></span>
+    </div>
+
+    <button class="generate-button" type="button" id="generate">
+      <span id="generate-label">Generate 1 Image</span>
+      <span class="generate-button__cost">
+        <span id="cost">0</span>
+        <span class="generate-button__spinner" id="cost-spinner" hidden>
+          <span></span><span></span>
+        </span>
+        <span class="icon icon--anla icon-anla" aria-hidden="true"></span>
+      </span>
+    </button>
+
+    <button class="footer-icon-button" type="button" id="mobile-history-toggle"
+            aria-label="History" aria-expanded="false" aria-controls="history-rail">
+      <span class="icon icon--sm icon-history" aria-hidden="true"></span>
+    </button>
+    </div>
+  </aside>
+
+  <main class="canvas">
+
+    <div class="canvas__progress" id="canvas-progress" hidden aria-hidden="true"></div>
+
+    <div class="canvas__placeholder" aria-hidden="true">
+      <span class="canvas__placeholder-icon"></span>
+    </div>
+
+    <div class="quick-action" id="quick-action" hidden>
+      <button class="result-tool" type="button" id="use-as-base"
+              aria-label="Use as base image">
+        <span class="icon icon-wand-sparkles" aria-hidden="true"></span>
+      </button>
+      <button class="result-tool" type="button" id="edit-image"
+              aria-label="Edit image">
+        <span class="icon icon--sm icon-pen" aria-hidden="true"></span>
+      </button>
+      <button class="result-tool" type="button" id="inpaint-image"
+              aria-label="Inpaint image">
+        <span class="icon icon--sm icon-inpaint" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <div class="result-row" id="result-row" hidden>
+  
+      <div class="resolution-control">
+        <div class="resolution-badge" id="resolution-badge" role="img"
+             aria-label="832 by 1216 pixels">
+          <span class="resolution-badge__value" id="resolution-badge-w"
+                aria-hidden="true">832</span>
+          <span class="icon icon-cross resolution-badge__separator"
+                aria-hidden="true"></span>
+          <span class="resolution-badge__value" id="resolution-badge-h"
+                aria-hidden="true">1216</span>
+        </div>
+        <button class="resolution-badge__expand" type="button"
+                id="expand-image" aria-label="View image full size">
+          <span class="icon icon--sm icon-expand-diagonal" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <div class="result-cluster">
+        <button class="result-tool" type="button" id="pin-image"
+                aria-label="Pin image" aria-pressed="false">
+          <span class="icon icon--sm icon-pin" aria-hidden="true"></span>
+        </button>
+        <button class="result-tool" type="button" id="copy-clipboard"
+                aria-label="Copy image to clipboard">
+          <span class="icon icon--sm icon-clipboard" aria-hidden="true"></span>
+        </button>
+        <button class="result-tool" type="button" id="download-image"
+                aria-label="Download image">
+          <span class="icon icon--sm icon-save" aria-hidden="true"></span>
+        </button>
+
+        <button class="seed-badge" type="button" id="seed-badge"
+                aria-label="Copy to Seed">
+          <span class="icon icon--sm icon-seed" aria-hidden="true"></span>
+          <span class="seed-badge__value" id="seed-badge-value">0</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <aside class="history-rail" id="history-rail">
+    <div class="history-rail__title">
+      <div class="history-rail__label">
+        <span>History</span>
+
+        <button class="history-help" type="button"
+                aria-label="About the history rail"
+                aria-describedby="history-help-tip">
+          <svg stroke="currentColor" fill="currentColor" stroke-width="0"
+               viewBox="0 0 24 24" height="1em" width="1em"
+               xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+            <path fill="none" d="M0 0h24v24H0z"></path>
+            <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"></path>
+          </svg>
+        </button>
+
+        <span class="history-help__tip" id="history-help-tip" role="tooltip" hidden>
+          Ctrl+Click on an image to set your settings to the ones used to generate
+          it (except for any init image).
+        </span>
+      </div>
+
+      <button class="history-rail__fold" type="button" id="history-fold"
+              aria-expanded="true" aria-controls="history-rail"
+              aria-label="Collapse history">
+        <span class="icon icon--xs icon-arrow-right" aria-hidden="true"></span>
+      </button>
+    </div>
+    <div class="history-rail__list" id="history-list"></div>
+  </aside>
+
+  <div class="history-reopen" id="history-reopen" hidden>
+    <button type="button" id="history-reopen-button" aria-label="Expand history"
+            aria-expanded="false" aria-controls="history-rail">
+      <span class="icon icon--md icon-history" aria-hidden="true"></span>
+    </button>
+  </div>
+
+</div>
+
+<div class="image-intent" id="image-intent" hidden>
+  <div class="image-intent__backdrop" id="image-intent-backdrop"></div>
+  <div class="image-intent__panel" role="dialog" aria-modal="true"
+       aria-labelledby="image-intent-title">
+    <div class="image-intent__box">
+      <button class="image-intent__close" type="button" id="image-intent-close"
+              aria-label="Close">
+        <span class="icon icon-close-x" aria-hidden="true"></span>
+      </button>
+
+      <div class="image-intent__lines" aria-hidden="true"></div>
+      <div class="image-intent__body">
+        <h2 class="image-intent__title" id="image-intent-title">What do you want to do with this image?</h2>
+
+        <div class="image-intent__preview">
+          <div class="image-intent__preview-image" id="image-intent-preview"></div>
+        </div>
+
+        <div class="image-intent__options">
+          <button class="image-intent__option" type="button" data-intent="img2img">
+            <span class="icon icon--sm icon-img2img" aria-hidden="true"></span>
+            <span>Image2Image</span>
+          </button>
+
+          <button class="image-intent__option" type="button" data-intent="vibe"
+                  id="image-intent-vibe"
+                  title="Encodes the image as a vibe reference - costs 2 Anlas.">
+            <span class="icon icon--sm icon-vibe-transfer" aria-hidden="true"></span>
+            <span>Vibe Transfer</span>
+          </button>
+
+          <button class="image-intent__option" type="button" data-intent="precise"
+                  id="image-intent-precise">
+            <span class="icon icon--sm icon-precise-reference" aria-hidden="true"></span>
+            <span>Precise Reference</span>
+          </button>
+        </div>
+
+        <div class="image-meta" id="image-meta" hidden>
+          <div class="image-meta__lines">
+            <span>This image has metadata!</span>
+            <span>Did you want to import that instead?</span>
+          </div>
+
+          <div class="image-meta__row">
+          
+            <div class="image-meta__fields">
+              <label class="image-meta__check">
+                <input type="checkbox" id="meta-prompt" checked>
+                <span class="image-meta__box"></span>
+                <span class="image-meta__label">Prompt</span>
+              </label>
+              <label class="image-meta__check">
+                <input type="checkbox" id="meta-undesired" checked>
+                <span class="image-meta__box"></span>
+                <span class="image-meta__label">Undesired Content</span>
+              </label>
+              <div class="image-meta__group">
+                <label class="image-meta__check">
+                  <input type="checkbox" id="meta-characters" checked>
+                  <span class="image-meta__box"></span>
+                  <span class="image-meta__label">Characters</span>
+                </label>
+                <label class="image-meta__check image-meta__check--nested">
+                  <input type="checkbox" id="meta-append">
+                  <span class="image-meta__box"></span>
+                  <span class="image-meta__label">Append</span>
+                </label>
+              </div>
+              <label class="image-meta__check">
+                <input type="checkbox" id="meta-settings" checked>
+                <span class="image-meta__box"></span>
+                <span class="image-meta__label">Settings</span>
+              </label>
+              <label class="image-meta__check">
+                <input type="checkbox" id="meta-seed" checked>
+                <span class="image-meta__box"></span>
+                <span class="image-meta__label">Seed</span>
+              </label>
+            </div>
+
+            <div class="image-meta__actions">
+              <button class="image-meta__import" type="button" id="meta-import">
+                <span>Import Metadata</span>
+              </button>
+              <div class="image-meta__clean-row">
+                <label class="image-meta__check">
+                  <input type="checkbox" id="meta-clean">
+                  <span class="image-meta__box"></span>
+                  <span class="image-meta__label">Clean Imports</span>
+                </label>
+                
+                <span class="image-meta__help"
+                      title="Recognised quality tags and Undesired Content presets always move to their settings on import. This additionally strips leftover quality tags that matched no known preset.">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"
+                       aria-hidden="true">
+                    <path fill="none" d="M0 0h24v24H0z"></path>
+                    <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"></path>
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="draw-window draw-window--mask" id="draw-window" role="dialog"
+     aria-modal="true" aria-label="Draw Mask" hidden>
+
+  <div class="draw-window__chrome">
+
+    <div class="draw-window__top">
+      <div class="draw-tools">
+
+        <div class="draw-tools__title">
+          <span class="icon icon--sm icon-pen" id="draw-window-title-icon"
+                aria-hidden="true"></span>
+          <span id="draw-window-title">Draw Mask</span>
+        </div>
+        <div class="draw-tools__rule" aria-hidden="true"></div>
+        <div class="draw-tools__fields">
+         
+          <div class="pen-color-group" id="pen-color-group">
+            <div class="pen-color__ring">
+              <button class="pen-color" type="button" id="pen-color"
+                      aria-label="Pen colour" aria-haspopup="dialog"
+                      aria-expanded="false">
+                <span class="pen-color__well" aria-hidden="true">
+                  <span class="icon icon--sm icon-dropper"></span>
+                </span>
+              </button>
+            </div>
+          </div>
+          <div class="draw-tools__stack">
+
+            <div class="pen-size-group" id="pen-size-group">
+              <div class="pen-size">
+                <span>Pen Size:</span>
+ 
+                <input class="pen-size__number" id="pen-size" type="number"
+                       value="4" step="1" aria-label="Pen size">
+              </div>
+              <input class="pen-size__range" id="pen-size-range" type="range"
+                     value="4" min="4" max="50" step="1" aria-label="Pen size">
+            </div>
+
+            <div class="pen-size-group" id="context-area-group" hidden>
+              <div class="pen-size">
+                <span>Minimum Context Area:</span>
+                <input class="pen-size__number" id="context-area" type="number"
+                       value="96" step="8" aria-label="Minimum context area">
+              </div>
+              <input class="pen-size__range" id="context-area-range" type="range"
+                     value="96" min="32" max="96" step="8"
+                     aria-label="Minimum context area">
+            </div>
+
+            <label class="square-brush" id="square-brush-row">
+
+              <input type="checkbox" id="square-brush" aria-label="Square Brush">
+              <span class="square-brush__box" aria-hidden="true">
+                <span class="icon icon-check"></span>
+              </span>
+              <span class="square-brush__label">Square Brush</span>
+            </label>
+          </div>
+
+          <div class="brush-shape-row" id="brush-shape-row">
+            <div class="brush-shape" role="radiogroup" aria-label="Brush shape">
+              <button class="brush-shape__button" type="button" data-shape="round"
+                      role="radio" aria-checked="true" aria-label="Round brush">
+                <span class="brush-shape__dot" aria-hidden="true"></span>
+              </button>
+              <button class="brush-shape__button" type="button" data-shape="soft"
+                      role="radio" aria-checked="false" aria-label="Soft brush">
+                <span class="brush-shape__dot brush-shape__dot--soft" aria-hidden="true"></span>
+              </button>
+              <button class="brush-shape__button" type="button" data-shape="square"
+                      role="radio" aria-checked="false" aria-label="Square brush">
+                <span class="brush-shape__dot brush-shape__dot--square" aria-hidden="true"></span>
+              </button>
+            </div>
+            <button class="brush-shape__button brush-shape__button--detached"
+                    type="button" id="pen-pressure" aria-pressed="false"
+                    aria-label="Pen pressure">
+              <span class="icon icon--sm icon-penwriting" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="draw-actions">
+        <button class="draw-actions__icon" type="button" id="draw-export"
+                aria-label="Download Canvas as PNG">
+          <span class="icon icon--sm icon-export" aria-hidden="true"></span>
+        </button>
+        <button class="draw-actions__save" type="button" id="draw-save">Save &amp; Close</button>
+        <button class="draw-actions__icon" type="button" id="draw-close"
+                aria-label="Close without saving">
+          <span class="icon icon--sm icon-close-x" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="draw-window__middle">
+      <div class="draw-stage" id="draw-stage"></div>
+      <div class="draw-layers" id="draw-layers">
+        <div class="draw-layers__panel" id="draw-layers-panel">
+          <div class="draw-layers__header">
+            <button class="draw-layers__action" type="button" id="draw-layer-add"
+                    aria-label="Add layer">
+              <span class="icon icon--xs icon-plus" aria-hidden="true"></span>
+            </button>
+            <button class="draw-layers__action draw-layers__action--merge" type="button"
+                    id="draw-layer-merge" aria-label="Merge layers">
+              <span class="icon icon-layer-merge" aria-hidden="true"></span>
+            </button>
+          </div>
+          <div class="draw-layers__list" id="draw-layers-list"></div>
+        </div>
+        <button class="draw-layers__toggle" type="button" id="draw-layers-toggle"
+                aria-expanded="true" aria-controls="draw-layers-panel" title="Layers">
+          <span class="icon icon-layers" aria-hidden="true"></span>
+          <span class="draw-layers__count" id="draw-layers-count">1</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="draw-window__bottom">
+      <div class="draw-toolbar">
+        <button class="draw-tool" type="button" data-tool="pen"
+                aria-pressed="true" aria-label="Pen">
+          <span class="icon icon--sm icon-pen" aria-hidden="true"></span>
+        </button>
+        <button class="draw-tool" type="button" data-tool="eraser"
+                aria-pressed="false" aria-label="Eraser">
+          <span class="icon icon--sm icon-eraser" aria-hidden="true"></span>
+        </button>
+        <button class="draw-tool" type="button" data-tool="fill"
+                aria-pressed="false" aria-label="Fill">
+          <span class="icon icon--sm icon-fill" aria-hidden="true"></span>
+        </button>
+
+        <button class="draw-tool" type="button" data-tool="select"
+                aria-pressed="false" aria-label="Focused Area Selection">
+          <span class="icon icon--sm icon-select" aria-hidden="true"></span>
+        </button>
+
+        <button class="draw-tool draw-tool--ink" type="button" data-tool="lasso"
+                aria-pressed="false" aria-label="Lasso select">
+          <span class="icon icon--sm icon-lasso" aria-hidden="true"></span>
+        </button>
+        <button class="draw-tool draw-tool--ink" type="button" data-tool="dropper"
+                aria-pressed="false" aria-label="Colour picker">
+          <span class="icon icon--sm icon-dropper" aria-hidden="true"></span>
+        </button>
+        <button class="draw-tool draw-tool--ink" type="button" data-tool="blur"
+                aria-pressed="false" aria-label="Blur">
+          <span class="icon icon--sm icon-blur" aria-hidden="true"></span>
+        </button>
+        <button class="draw-tool draw-tool--ink" type="button" data-tool="clone"
+                aria-pressed="false" aria-label="Clone stamp">
+          <span class="icon icon--sm icon-clone-stamp" aria-hidden="true"></span>
+        </button>
+
+        <div class="draw-toolbar__spacer" aria-hidden="true"></div>
+
+        <button class="draw-tool draw-tool--mask" type="button" id="draw-palette"
+                aria-label="Colour (mask is single-colour)" disabled>
+          <span class="icon icon--sm icon-palette" aria-hidden="true"></span>
+        </button>
+
+        <button class="draw-tool draw-tool--ink" type="button" id="draw-settings"
+                aria-label="HSV Adjustment">
+          <span class="icon icon--sm icon-sliders" aria-hidden="true"></span>
+        </button>
+        <button class="draw-tool" type="button" id="draw-clear"
+                aria-label="Clear the mask">
+          <span class="icon icon--sm icon-trash" aria-hidden="true"></span>
+        </button>
+        <button class="draw-tool" type="button" id="draw-resize"
+                aria-label="Resize Canvas" aria-haspopup="dialog"
+                aria-expanded="false">
+          <span class="icon icon--sm icon-resize" aria-hidden="true"></span>
+        </button>
+
+        <div class="draw-toolbar__rule" aria-hidden="true"></div>
+
+        <button class="draw-tool" type="button" id="draw-undo"
+                aria-label="Undo" disabled>
+          <span class="icon icon--sm icon-undo" aria-hidden="true"></span>
+        </button>
+        <button class="draw-tool" type="button" id="draw-redo"
+                aria-label="Redo" disabled>
+          <span class="icon icon--sm icon-redo" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="color-picker" id="color-picker" role="dialog"
+         aria-label="Pen colour" hidden>
+
+      <div class="color-picker__field" id="color-field">
+        <div class="color-picker__thumb" id="color-field-thumb" aria-hidden="true"></div>
+      </div>
+      <div class="color-picker__hue" id="color-hue">
+        <div class="color-picker__handle" id="color-hue-handle" aria-hidden="true"></div>
+      </div>
+
+      <div class="color-picker__alpha" id="color-alpha">
+        <div class="color-picker__handle" id="color-alpha-handle" aria-hidden="true"></div>
+      </div>
+
+      <div class="color-picker__hex" id="color-hex">000000</div>
+    </div>
+
+    <div class="hsv-panel" id="hsv-panel" role="dialog"
+         aria-label="HSV Adjustment" hidden>
+      <div class="hsv-panel__body">
+        <div class="hsv-panel__title">HSV Adjustment</div>
+
+        <div class="hsv-field">
+          <div class="hsv-field__row">
+            <span class="hsv-field__label">
+              Hue:
+              <input class="hsv-field__number" id="hsv-hue" type="number"
+                     value="0" step="1" aria-label="Hue">
+              <span class="hsv-field__unit">°</span>
+            </span>
+          </div>
+          <input class="hsv-field__range" id="hsv-hue-range" type="range"
+                 value="0" min="-180" max="180" step="1" aria-label="Hue">
+        </div>
+
+        <div class="hsv-field">
+          <div class="hsv-field__row">
+            <span class="hsv-field__label">
+              Saturation:
+              <input class="hsv-field__number" id="hsv-saturation" type="number"
+                     value="0" step="1" aria-label="Saturation">
+              <span class="hsv-field__unit">%</span>
+            </span>
+          </div>
+          <input class="hsv-field__range" id="hsv-saturation-range" type="range"
+                 value="0" min="-100" max="100" step="1" aria-label="Saturation">
+        </div>
+
+        <div class="hsv-field">
+          <div class="hsv-field__row">
+            <span class="hsv-field__label">
+              Brightness:
+              <input class="hsv-field__number" id="hsv-brightness" type="number"
+                     value="0" step="1" aria-label="Brightness">
+              <span class="hsv-field__unit">%</span>
+            </span>
+          </div>
+          <input class="hsv-field__range" id="hsv-brightness-range" type="range"
+                 value="0" min="-100" max="100" step="1" aria-label="Brightness">
+        </div>
+
+        <div class="hsv-panel__actions">
+          <button class="hsv-panel__text" type="button" id="hsv-reset">Reset</button>
+          <div class="hsv-panel__spacer" aria-hidden="true"></div>
+          <button class="hsv-panel__text" type="button" id="hsv-cancel">Cancel</button>
+          <button class="hsv-panel__apply" type="button" id="hsv-apply">Apply</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="resize-modal" id="resize-modal" hidden>
+      <div class="resize-modal__backdrop" id="resize-modal-backdrop"></div>
+      <div class="resize-modal__box" role="dialog" aria-modal="true"
+           aria-labelledby="resize-modal-title">
+        <button class="resize-modal__close" type="button" id="resize-modal-close"
+                aria-label="Close">
+          <span class="icon icon-close-x" aria-hidden="true"></span>
+        </button>
+
+        <div class="resize-modal__title" id="resize-modal-title">Resize Canvas</div>
+        <div class="resize-modal__gap-20" aria-hidden="true"></div>
+
+        <div class="resize-modal__row">
+          <div class="resize-modal__label">
+            Change Size<span class="resize-modal__hint"> [w x h]</span>
+          </div>
+          <button class="resize-modal__crop" type="button" id="resize-crop">
+            Crop to closest valid generation size
+          </button>
+        </div>
+
+        <div class="resize-modal__row resize-modal__row--size">
+          <input class="resize-modal__input" id="resize-width" type="number"
+                 aria-label="Width">
+
+          <button class="resize-modal__swap" type="button" id="resize-swap"
+                  aria-label="Swap width and height">
+            <span class="icon icon-cross" aria-hidden="true"></span>
+          </button>
+          <input class="resize-modal__input" id="resize-height" type="number"
+                 aria-label="Height">
+        </div>
+
+        <div class="resize-modal__gap-10" aria-hidden="true"></div>
+        <div class="resize-modal__or">or</div>
+        <div class="resize-modal__gap-10" aria-hidden="true"></div>
+
+        <div class="resize-modal__label">Shift Edges</div>
+
+        <div class="resize-modal__edges">
+          <div class="resize-modal__edge">
+            <input class="resize-modal__input resize-modal__input--edge"
+                   id="resize-left" type="number" value="0" aria-label="Shift left edge">
+          </div>
+          <div class="resize-modal__middle">
+            <input class="resize-modal__input resize-modal__input--edge"
+                   id="resize-top" type="number" value="0" aria-label="Shift top edge">
+            <div class="resize-modal__preview" id="resize-preview"></div>
+            <input class="resize-modal__input resize-modal__input--edge"
+                   id="resize-bottom" type="number" value="0" aria-label="Shift bottom edge">
+          </div>
+          <div class="resize-modal__edge">
+            <input class="resize-modal__input resize-modal__input--edge"
+                   id="resize-right" type="number" value="0" aria-label="Shift right edge">
+          </div>
+        </div>
+
+        <button class="resize-modal__apply" type="button" id="resize-apply">Resize</button>
+      </div>
+    </div>
+
+    <div class="draw-window__renderer" aria-hidden="true">canvas2d</div>
+  </div>
+</div>
+
+<div class="app-settings" id="app-settings" hidden>
+  <div class="app-settings__backdrop" id="app-settings-backdrop"></div>
+  <div class="app-settings__panel" role="dialog" aria-modal="true"
+       aria-labelledby="app-settings-title">
+    <div class="app-settings__box">
+      <button class="app-settings__close" type="button" id="app-settings-close"
+              aria-label="Close">
+        <span class="icon icon-close-x" aria-hidden="true"></span>
+      </button>
+      <h2 class="app-settings__title" id="app-settings-title">Settings</h2>
+
+      <div class="app-settings__body">
+
+        <div class="app-settings__grid">
+
+          <label class="setting" id="opus-always-show-setting" hidden>
+            <span class="setting__row">
+              <span class="setting__label">Always Show Usage Limit Bar</span>
+              <span class="toggle">
+                <input type="checkbox" id="opus-always-show"
+                       aria-label="Always Show Usage Limit Bar">
+                <span class="toggle__track" aria-hidden="true"></span>
+              </span>
+            </span>
+            <span class="setting__descs">
+              <span class="setting__desc">
+                Show the remaining allowance above the Generate button.
+              </span>
+            </span>
+          </label>
+
+          <label class="setting">
+            <span class="setting__row">
+              <span class="setting__label">Persist image generation history</span>
+              <span class="toggle">
+
+                <input type="checkbox" id="setting-persist-history"
+                       aria-describedby="setting-persist-history-desc">
+                <span class="toggle__track" aria-hidden="true"></span>
+              </span>
+            </span>
+            <span class="setting__descs">
+              <span class="setting__desc" id="setting-persist-history-desc">
+                Keep your generated images in the history rail between visits.
+              </span>
+            </span>
+          </label>
+        </div>
+
+        <div class="opus-section" id="opus-panel" hidden>
+          <div class="opus-section__divider" aria-hidden="true"></div>
+          <div class="opus-panel">
+          <div class="opus-panel__title">Opus Generation Usage Limit</div>
+          <p class="opus-panel__blurb">
+            Your Opus subscription includes free NovelAI Diffusion V5 generations at
+            normal resolutions and up to 28 steps. This allowance is limited and refills
+            automatically over time. When it runs out, you can still generate images by
+            spending Anlas.
+          </p>
+          <div class="opus-meter">
+            <div class="opus-meter__row">
+              <span class="opus-meter__label" id="opus-panel-label"></span>
+            </div>
+            <div class="opus-meter__track">
+              <div class="opus-meter__fill" id="opus-panel-fill"></div>
+            </div>
+          </div>
+          <p class="opus-panel__refill" id="opus-panel-refill"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="login-gate" id="login-gate" hidden>
+  <div class="login-gate__card" role="dialog" aria-modal="true" aria-labelledby="login-gate-title">
+    <span class="rand-mark icon-crow" aria-hidden="true"></span>
+    <h1 class="login-gate__title" id="login-gate-title">Sign in to continue</h1>
+    <p class="login-gate__body">
+      This server requires you to sign in before generating.
+    </p>
+    <a class="login-gate__button" id="login-gate-button" href="/auth/login">
+      Sign in
+    </a>
+    <p class="login-gate__note" id="login-gate-note" hidden></p>
+  </div>
+</div>
+
+<div class="drop-overlay" id="drop-overlay" aria-hidden="true" hidden>
+  <div class="drop-overlay__badge">
+    <span class="icon icon-drop-upload" aria-hidden="true"></span>
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
