@@ -103,6 +103,16 @@ textarea:focus-visible {
   border-radius: var(--nai-radius);
 }
 
+.canvas__preview {
+  position: absolute;
+  top: calc(52px + (100% - 82px) * 0.025);
+  left: calc(30px + (100% - 60px) * 0.025);
+  width: calc((100% - 60px) * 0.95);
+  height: calc((100% - 82px) * 0.95);
+  object-fit: contain;
+  border-radius: var(--nai-radius);
+}
+
 .canvas__grid {
   display: grid;
   gap: var(--nai-space-2);
@@ -154,6 +164,10 @@ textarea:focus-visible {
 .canvas__cell .canvas__image {
   max-width: 95%;
   max-height: 95%;
+}
+
+.canvas__placeholder[hidden] {
+  display: none;
 }
 
 .canvas__placeholder {

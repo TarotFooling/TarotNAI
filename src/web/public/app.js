@@ -4636,6 +4636,55 @@ const generateButton = document.getElementById('generate');
 generateButtonReady = true;
 syncGenerateDisabled();
 const canvasProgress = document.getElementById('canvas-progress');
+const livePreviewToggle = document.getElementById('setting-live-preview');
+
+let canvasPreview = null;
+
+const previewHidden = [];
+
+function stashBehindPreview(canvas) {
+  for (const child of canvas.querySelectorAll(':scope > .canvas__image, :scope > .canvas__grid')) {
+    if (child.hidden) continue;
+    child.hidden = true;
+    previewHidden.push(child);
+  }
+
+  const placeholder = canvas.querySelector('.canvas__placeholder');
+  if (placeholder && !placeholder.hidden) {
+    placeholder.hidden = true;
+    previewHidden.push(placeholder);
+  }
+}
+
+function restoreBehindPreview() {
+  for (const child of previewHidden) {
+    if (child.isConnected) child.hidden = false;
+  }
+  previewHidden.length = 0;
+}
+
+function showPreview(src) {
+  const canvas = document.querySelector('.canvas');
+  if (!canvas) return;
+
+  if (!canvasPreview) {
+    canvasPreview = document.createElement('img');
+    canvasPreview.className = 'canvas__preview';
+    canvasPreview.alt = '';
+    canvasPreview.setAttribute('aria-hidden', 'true');
+  }
+  if (canvasPreview.parentNode !== canvas) canvas.append(canvasPreview);
+
+  stashBehindPreview(canvas);
+
+  canvasPreview.src = src;
+}
+
+function hidePreview({ restore = false } = {}) {
+  canvasPreview?.remove();
+  if (restore) restoreBehindPreview();
+  else previewHidden.length = 0;
+}
 const generateLabel = document.getElementById('generate-label');
 const generateIdleLabel = generateLabel.textContent;
 
@@ -4864,6 +4913,15 @@ function watchJob(jobId, settings, focused = null, overlayBase = null, focusedBl
     refreshBalance();
   });
 
+  stream.addEventListener('preview', (event) => {
+    if (!isCurrent()) return;
+    try {
+      const preview = JSON.parse(event.data);
+      if (preview.image) showPreview(preview.image);
+    } catch {
+    }
+  });
+
   stream.onmessage = (event) => {
     if (!isCurrent()) {
       stream.close();
@@ -4876,6 +4934,7 @@ function watchJob(jobId, settings, focused = null, overlayBase = null, focusedBl
       stream.close();
       activeStream = null;
       setBusy(false);
+      hidePreview({ restore: !update.image });
       if (update.image) {
         const deliver = (src, at = 0) => {
           const seed = update.seeds?.[at] ?? update.seed;
@@ -4932,6 +4991,7 @@ function watchJob(jobId, settings, focused = null, overlayBase = null, focusedBl
     activeStream = null;
     lastParamsKey = null;
     setBusy(false);
+    hidePreview({ restore: true });
   };
 }
 
@@ -5171,7 +5231,7 @@ function renderHistory() {
 function clearCanvas() {
   const canvas = document.querySelector('.canvas');
 
-  const keep = new Set([canvasProgress, quickAction, resultRow, enhancePanel]);
+  const keep = new Set([canvasProgress, canvasPreview, quickAction, resultRow, enhancePanel]);
   for (const child of [...canvas.children]) {
     if (!keep.has(child)) child.remove();
   }
@@ -5665,7 +5725,7 @@ generateButton.addEventListener('click', async () => {
     const res = await apiFetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
+      body: JSON.stringify({ ...params, livePreview: livePreviewToggle?.checked !== false }),
     });
 
     let body = {};
@@ -5741,6 +5801,7 @@ function collectDraft() {
     disableTagSuggestions: document.getElementById('disable-tag-suggestions').checked,
     highlightEmphasis: document.getElementById('highlight-emphasis').checked,
     opusAlwaysShow: document.getElementById('opus-always-show').checked,
+    livePreview: document.getElementById('setting-live-preview').checked,
     promptStacked,
     img2imgStrength: document.getElementById('img2img-strength').value,
     img2imgNoise: document.getElementById('img2img-noise').value,
@@ -5824,6 +5885,7 @@ async function restoreDraft() {
       restoreControl('disable-tag-suggestions', saved.disableTagSuggestions);
       restoreControl('highlight-emphasis', saved.highlightEmphasis);
       restoreControl('opus-always-show', saved.opusAlwaysShow);
+      restoreControl('setting-live-preview', saved.livePreview);
       renderOpusUsage();
       restoreControl('img2img-strength', saved.img2imgStrength);
       restoreControl('img2img-noise', saved.img2imgNoise);
@@ -5952,6 +6014,7 @@ for (const id of [
   'prompt', 'undesired', 'width', 'height', 'steps', 'guidance', 'seed',
   'sampler', 'add-quality-tags', 'uc-preset',
   'disable-tag-suggestions', 'highlight-emphasis', 'opus-always-show',
+  'setting-live-preview',
   'img2img-strength', 'img2img-noise', 'inpaint-strength',
   'steps-range', 'guidance-range',
 ]) {

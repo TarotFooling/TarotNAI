@@ -12,6 +12,7 @@ import {
 import { V5_CURATED_MODEL, V5_FULL_MODEL } from '../shared/modelIds.js';
 import { composePrompts, UC_PRESETS } from '../shared/presets.js';
 import { vibeParameters, vibeCacheKey } from '../shared/vibe.js';
+import { createFrameReader, createSseReader, sseToEvent } from './msgpack.js';
 
 const IMAGE_API = 'https://image.novelai.net';
 
@@ -175,7 +176,7 @@ function cachedImage(imageB64) {
   return { cache_secret_key: key, data: imageB64 };
 }
 
-function buildRequestBody(body) {
+function buildRequestBody(body, { multipart = false } = {}) {
   const form = new FormData();
   const partFor = new Map();
   let uploads = 0;
@@ -196,7 +197,7 @@ function buildRequestBody(body) {
     }
   }
 
-  if (uploads === 0) {
+  if (uploads === 0 && !multipart) {
     return { body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } };
   }
 
@@ -554,6 +555,43 @@ function logRequest({ params, body }) {
   }
 }
 
+function streamFailureMessage({ bytesRead, head, frameTypes, cause }) {
+  const preview = head.length
+    ? [...head].map((b) => b.toString(16).padStart(2, '0')).join(' ')
+    : '';
+
+  if (bytesRead === 0) {
+    return 'NovelAI accepted the request but sent no preview data at all (0 bytes).';
+  }
+
+  const text = head.toString('utf8');
+
+  if (text.trimStart().startsWith('{')) {
+    return `NovelAI returned JSON on the preview stream, not image frames:
+${text.trim()}`;
+  }
+
+  if (head.length >= 2 && head[0] === 0x50 && head[1] === 0x4b) {
+    return (
+      'NovelAI returned a zip on the preview endpoint, not a msgpack stream. ' +
+      'The streaming request was probably rejected and fell back to the normal endpoint.'
+    );
+  }
+
+  if (cause) {
+    return (
+      `The preview stream could not be decoded after ${bytesRead} bytes ` +
+      `(${frameTypes.length} frames).
+${cause.message}. First bytes: ${preview}`
+    );
+  }
+
+  return (
+    `NovelAI sent ${bytesRead} bytes on the preview stream but no complete frame ` +
+    `could be read. First bytes: ${preview}`
+  );
+}
+
 export class NaiClient {
   #token;
   #fetch;
@@ -641,7 +679,10 @@ export class NaiClient {
 
     if (this.#log) logRequest({ params, body });
 
-    const request = buildRequestBody(body);
+    const onPreview = typeof overrides.onPreview === 'function' ? overrides.onPreview : null;
+    const streaming = Boolean(onPreview);
+    const endpoint = streaming ? '/ai/generate-image-stream' : '/ai/generate-image';
+    const request = buildRequestBody(body, { multipart: streaming });
 
     const controller = new AbortController();
     const onAbort = () => controller.abort();
@@ -650,10 +691,11 @@ export class NaiClient {
 
     let res;
     try {
-      res = await this.#fetch(`${IMAGE_API}/ai/generate-image`, {
+      res = await this.#fetch(`${IMAGE_API}${endpoint}`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.#token}`,
+          ...(streaming ? { Accept: 'application/msgpack' } : {}),
           ...request.headers,
         },
         body: request.body,
@@ -685,6 +727,32 @@ export class NaiClient {
       throw errorForStatus(res.status, detail);
     }
 
+    if (streaming) {
+      const final = await this.#readStream(res, {
+        seed,
+        onPreview,
+        contentType: res.headers?.get?.('content-type') ?? '',
+      });
+
+      const metadata = readPngMetadata(final);
+      const image = {
+        bytes: final,
+        seed: seedFromMetadata(metadata) || seed,
+        metadata,
+      };
+
+      if (this.#log) {
+        console.log(`      ✓ ${Math.round(final.length / 1024)}kb  streamed  seed ${image.seed}`);
+      }
+
+      return {
+        images: [image],
+        bytes: image.bytes,
+        seed: image.seed,
+        metadata: image.metadata,
+      };
+    }
+
     const archive = Buffer.from(await res.arrayBuffer());
     const files = unzip(archive);
 
@@ -709,6 +777,57 @@ export class NaiClient {
       seed: images[0].seed,
       metadata: images[0].metadata,
     };
+  }
+
+  async #readStream(res, { seed, onPreview, contentType = '' }) {
+    const sse = /event-stream|text\/plain/i.test(contentType);
+    const readFrames = sse ? createSseReader() : createFrameReader();
+    const push = sse
+      ? (buf) => readFrames(buf).map(sseToEvent).filter(Boolean)
+      : readFrames;
+
+    let bytesRead = 0;
+    let head = Buffer.alloc(0);
+    const frameTypes = [];
+    let final = null;
+    let cause = null;
+
+    try {
+      for await (const chunk of res.body) {
+        const buf = Buffer.from(chunk);
+        bytesRead += buf.length;
+        if (head.length < 64) head = Buffer.concat([head, buf]).subarray(0, 64);
+
+        for (const event of push(buf)) {
+          const type = event.event_type ?? '';
+          frameTypes.push(type);
+
+          const bytes = event.image ? Buffer.from(event.image) : null;
+          if (!bytes?.length) continue;
+
+          if (type === 'final') {
+            final = bytes;
+            continue;
+          }
+
+          onPreview({
+            bytes,
+            seed,
+            stepIndex: event.step_ix ?? null,
+            sampleIndex: event.samp_ix ?? 0,
+            sigma: event.sigma ?? null,
+          });
+        }
+      }
+    } catch (err) {
+      cause = err;
+    }
+
+    if (final) return final;
+
+    throw new NaiError(streamFailureMessage({ bytesRead, head, frameTypes, cause }), {
+      code: 'bad_response',
+    });
   }
 
   async upscale({ image, model, scale = UPSCALE_SCALE }, signal) {
@@ -1013,7 +1132,7 @@ export function createTagSuggester(token, { fetch: fetchImpl, log = false } = {}
 export function createGenerator(token, { fetch: fetchImpl, log = false } = {}) {
   const client = new NaiClient({ token, fetch: fetchImpl, log });
 
-  return async (job, { signal }) => {
+  return async (job, { signal, onPreview = null } = {}) => {
     if (job.params.action === 'upscale') {
       return client.upscale(
         {
@@ -1024,7 +1143,7 @@ export function createGenerator(token, { fetch: fetchImpl, log = false } = {}) {
         signal,
       );
     }
-    return client.generate(job.params, signal);
+    return client.generate(job.params, signal, onPreview ? { onPreview } : {});
   };
 }
 

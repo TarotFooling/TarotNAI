@@ -12,10 +12,11 @@ export function isTerminal(state) {
   return TERMINAL_STATES.includes(state);
 }
 
-export function createJob({ params, now = Date.now() }) {
+export function createJob({ params, wantsPreview = false, now = Date.now() }) {
   return {
     id: randomUUID(),
     params,
+    wantsPreview,
     state: JobState.RUNNING,
     startedAt: now,
     finishedAt: null,

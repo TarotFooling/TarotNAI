@@ -1727,6 +1727,22 @@
 
           <label class="setting">
             <span class="setting__row">
+              <span class="setting__label">Show the image as it generates</span>
+              <span class="toggle">
+                <input type="checkbox" id="setting-live-preview" checked
+                       aria-describedby="setting-live-preview-desc">
+                <span class="toggle__track" aria-hidden="true"></span>
+              </span>
+            </span>
+            <span class="setting__descs">
+              <span class="setting__desc" id="setting-live-preview-desc">
+                Paint each denoising step onto the canvas while the image renders.
+              </span>
+            </span>
+          </label>
+
+          <label class="setting">
+            <span class="setting__row">
               <span class="setting__label">Persist image generation history</span>
               <span class="toggle">
 

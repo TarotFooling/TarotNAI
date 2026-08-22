@@ -32,7 +32,7 @@ export class Runner extends EventEmitter {
     return this.#running !== null;
   }
 
-  start({ params }) {
+  start({ params, wantsPreview = false }) {
     if (this.#stopped) throw new Error('Runner is stopped');
 
     if (this.#running) {
@@ -41,7 +41,7 @@ export class Runner extends EventEmitter {
       throw err;
     }
 
-    const job = createJob({ params, now: this.#now() });
+    const job = createJob({ params, wantsPreview, now: this.#now() });
     this.#jobs.set(job.id, job);
 
     this.#running = job;
@@ -97,7 +97,14 @@ export class Runner extends EventEmitter {
     this.#emitJob(job);
 
     try {
-      const result = await this.#generator(job, {});
+      const result = await this.#generator(job, {
+        onPreview: job.wantsPreview
+          ? (preview) => {
+              if (isTerminal(job.state)) return;
+              this.emit('preview', job, preview);
+            }
+          : null,
+      });
 
       if (!isTerminal(job.state)) {
         job.result = result ?? null;

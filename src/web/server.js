@@ -136,6 +136,24 @@ export function createServer({
     return result.bytes ? [{ bytes: result.bytes, seed: result.seed }] : [];
   };
 
+  runner.on('preview', (job, preview) => {
+    const listeners = watchers.get(job.id);
+    if (!listeners?.size) return;
+
+    const frame = `event: preview
+data: ${JSON.stringify({
+      id: job.id,
+      step: preview.stepIndex,
+      sample: preview.sampleIndex,
+      sigma: preview.sigma,
+      image: `data:image/jpeg;base64,${Buffer.from(preview.bytes).toString('base64')}`,
+    })}
+
+`;
+
+    for (const res of listeners) res.write(frame);
+  });
+
   runner.subscribe((job) => {
     const done = isTerminal(job.state);
     const images = done && job.state === 'done' ? resultImages(job.result) : [];
@@ -482,7 +500,10 @@ export function createServer({
         }
 
         try {
-          const job = runner.start({ params });
+          const job = runner.start({
+            params,
+            wantsPreview: input?.livePreview === true && (params.imageCount ?? 1) === 1,
+          });
           json(res, 202, {
             jobId: job.id,
             state: job.state,

@@ -311,6 +311,13 @@
     max-height: 100%;
   }
 
+  .canvas__preview {
+    top: var(--nai-space-2);
+    left: var(--nai-space-2);
+    width: calc(100% - var(--nai-space-2) * 2);
+    height: calc(100% - var(--nai-space-2) * 2);
+  }
+
      .result-row {
     left: var(--nai-space-2);
     right: var(--nai-space-2);
