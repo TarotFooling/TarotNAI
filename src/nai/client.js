@@ -925,7 +925,8 @@ export class NaiClient {
     const opus =
       usage && typeof usage.percent === 'number'
         ? {
-            percent: Math.max(0, Math.min(100, usage.percent)),
+            percent: usage.percent,
+            isNegative: usage.isNegative === true,
             secondsPerPercent: Number(usage.timeUntilNextPercent ?? 0),
           }
         : null;

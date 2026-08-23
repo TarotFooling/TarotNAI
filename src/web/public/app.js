@@ -2786,15 +2786,23 @@ const opusPanel = document.getElementById('opus-panel');
 const opusPanelLabel = document.getElementById('opus-panel-label');
 const opusPanelFill = document.getElementById('opus-panel-fill');
 const opusPanelRefill = document.getElementById('opus-panel-refill');
+const opusPanelEmpty = document.getElementById('opus-panel-empty');
 const opusAlwaysShow = document.getElementById('opus-always-show');
 const opusAlwaysShowSetting = document.getElementById('opus-always-show-setting');
 
-function formatOpusEta(seconds) {
-  const total = Math.max(0, Math.round(seconds));
-  const hours = Math.floor(total / 3600);
-  const minutes = Math.round((total % 3600) / 60);
-  if (hours > 0) return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
-  return `${Math.max(1, minutes)}m`;
+const IMAGES_PER_PERCENT = 17.3;
+
+function opusPercent(opus) {
+  return opus.isNegative ? 0 : Math.max(0, Math.round(opus.percent));
+}
+
+function opusRefillPerDay(opus) {
+  const step = Number(opus.secondsPerPercent) || 0;
+  return step > 0 ? Math.round((86400 / step) * 10) / 10 : 0;
+}
+
+function opusImages(percent) {
+  return Math.round(IMAGES_PER_PERCENT * percent);
 }
 
 function renderOpusUsage() {
@@ -2805,29 +2813,29 @@ function renderOpusUsage() {
   if (opusBar) opusBar.hidden = !opus || !opusAlwaysShow?.checked;
   if (!opus) return;
 
-  const percent = Math.max(0, Math.min(100, Math.round(opus.percent)));
-  const label = `${percent}% of Opus Generations remaining`;
+  const percent = opusPercent(opus);
+  const width = `${Math.min(100, percent)}%`;
 
-  if (opusBarLabel) opusBarLabel.textContent = label;
-  if (opusPanelLabel) opusPanelLabel.textContent = `${percent}% remaining`;
+  if (opusBarLabel) opusBarLabel.textContent = `${percent}% of Opus Generations remaining`;
+  if (opusPanelLabel) {
+    opusPanelLabel.textContent = `${percent}% remaining (~${opusImages(percent)} images)`;
+  }
 
   for (const fill of [opusBarFill, opusPanelFill]) {
     if (!fill) continue;
-    fill.style.width = `${percent}%`;
-    fill.classList.toggle('opus-meter__fill--empty', percent === 0);
+    fill.style.width = width;
+    fill.classList.toggle('opus-meter__fill--empty', percent <= 0);
   }
 
   if (opusPanelRefill) {
-    const perPercent = Number(opus.secondsPerPercent) || 0;
-    if (percent >= 100 || perPercent <= 0) {
-      opusPanelRefill.textContent = percent >= 100 ? 'Your allowance is full.' : '';
-    } else {
-      const rate = (3600 / perPercent).toFixed(1).replace(/\.0$/, '');
-      const eta = formatOpusEta((100 - percent) * perPercent);
-      opusPanelRefill.textContent =
-        `Currently refilling at ${rate}% per hour. Reaches 100% in ${eta}.`;
-    }
+    const rate = opusRefillPerDay(opus);
+    opusPanelRefill.textContent =
+      rate > 0 && percent < 100
+        ? `Currently refills at ${rate}% per day (~${opusImages(rate)} images).`
+        : 'Refilling is currently paused.';
   }
+
+  if (opusPanelEmpty) opusPanelEmpty.hidden = !opus.isNegative;
 }
 
 opusAlwaysShow?.addEventListener('change', renderOpusUsage);

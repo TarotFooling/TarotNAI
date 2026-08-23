@@ -2959,3 +2959,14 @@ input[type='number']::-webkit-inner-spin-button {
 .opus-panel__refill:empty {
   display: none;
 }
+
+.opus-panel__empty[hidden] {
+  display: none;
+}
+
+.opus-panel__empty {
+  margin: 0;
+  color: var(--nai-warning);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
